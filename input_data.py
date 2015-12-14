@@ -21,7 +21,6 @@ import os
 import numpy
 from six.moves import urllib
 from six.moves import xrange  # pylint: disable=redefined-builtin
-SOURCE_URL = 'http://yann.lecun.com/exdb/mnist/'
 
 def _read32(bytestream):
   # dt = numpy.dtype(numpy.uint32)
@@ -33,6 +32,7 @@ def extract_images(filename):
   print('Extracting', filename)
   with gzip.open(filename) as bytestream:
     num_images = _read32(bytestream)
+    num_images = 10000
     print(num_images)
     # rows = _read32(bytestream)
     # cols = _read32(bytestream)
@@ -58,6 +58,7 @@ def extract_labels(filename, one_hot=False):
   print('Extracting', filename)
   with gzip.open(filename) as bytestream:
     num_items = _read32(bytestream)
+    num_items = 10000
     buf = bytestream.read(num_items)
     labels = numpy.frombuffer(buf, dtype=numpy.uint8)
     if one_hot:
@@ -144,10 +145,10 @@ def read_data_sets(train_dir, fake_data=False, one_hot=False):
   train_images = extract_images(os.path.join(train_dir, GAMES))
   train_labels = extract_labels(os.path.join(train_dir, RESULTS), one_hot=one_hot)
 
-  validation_images = train_images[:VALIDATION_SIZE]
-  validation_labels = train_labels[:VALIDATION_SIZE]
-  train_images = train_images[VALIDATION_SIZE:]
-  train_labels = train_labels[VALIDATION_SIZE:]
+  # validation_images = train_images[:VALIDATION_SIZE]
+  # validation_labels = train_labels[:VALIDATION_SIZE]
+  # train_images = train_images[VALIDATION_SIZE:]
+  # train_labels = train_labels[VALIDATION_SIZE:]
 
   test_images = train_images[:TEST_SIZE]
   test_labels = train_labels[:TEST_SIZE]
@@ -155,7 +156,6 @@ def read_data_sets(train_dir, fake_data=False, one_hot=False):
   train_labels = train_labels[TEST_SIZE:]
 
   data_sets.train = DataSet(train_images, train_labels)
-  data_sets.validation = DataSet(validation_images, validation_labels)
+  # data_sets.validation = DataSet(validation_images, validation_labels)
   data_sets.test = DataSet(test_images, test_labels)
-  data_sets.test = DataSet(validation_images, validation_labels)
   return data_sets

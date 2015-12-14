@@ -3,7 +3,7 @@
 puts
 
 GAMESDIR = '/Users/erenhalici/Academic/tensorflow/usr/go/games'
-OUTPUTDIR = '/Users/erenhalici/Academic/tensorflow/usr/go/data'
+OUTPUTDIR = '/Users/erenhalici/Academic/tensorflow/usr/go/data/endgame_double'
 
 FREE = ' '
 BLACK = '•'
@@ -80,7 +80,7 @@ end
 
 def parsefile(file)
   f = File.open(file)
-  input = f.read.encode('UTF-8', :invalid => :replace)
+  input = f.read.encode('UTF-8', :invalid => :replace).gsub('(KGS)', '')
   f.close
   tokens = input.split(';')
   info = tokens[1]
@@ -149,7 +149,7 @@ def parsefile(file)
     player = move[/^[^A-Z]*([BW])\[([^\]]*)\]/, 1]
     location = move[/^[^A-Z]*([BW])\[([^\]]*)\]/, 2]
 
-    if player
+    if player && location != ''
       lost_pieces += make_move(board, player=='B', location[1].ord - 'a'.ord, location[0].ord - 'a'.ord)
     end
   end
@@ -202,11 +202,26 @@ def convert_result(result)
   else
     9
   end
+  # if result < -6
+  #   0
+  # elsif result < -2
+  #   1
+  # elsif result <= 2
+  #   2
+  # elsif result <= 6
+  #   3
+  # else
+  #   4
+  # end
 end
 
 total = 0
+endgames = []
 boards = []
 labels = []
+
+games = {}
+
 Dir.glob(GAMESDIR + '/**/*.sgf').each do |file|
   total += 1
 
@@ -215,14 +230,32 @@ Dir.glob(GAMESDIR + '/**/*.sgf').each do |file|
   begin
     endgame = parsefile(file)
     if endgame
-      count += 1
-      boards << convert_board(endgame[:board])
-      labels << convert_result(endgame[:result])
+      if !games[endgame[:board].flatten.join('|')]
+        games[endgame[:board].flatten.join('|')] = true
+
+        count += 1
+        # endgames << endgame
+        # board = endgame[:board]
+        # endgames << {board: board.map{|row| row.reverse}, result: endgame[:result]}
+        boards << convert_board(endgame[:board])
+        labels << convert_result(endgame[:result])
+        boards << convert_board(endgame[:board].reverse)
+        labels << convert_result(endgame[:result])
+        boards << convert_board((endgame[:board].map{|row| row.reverse}).reverse)
+        labels << convert_result(endgame[:result])
+        boards << convert_board(endgame[:board].map{|row| row.reverse})
+        labels << convert_result(endgame[:result])
+      end
     end
   rescue
   end
 # end
 end
+
+# endgames.shuffle.each do |endgame|
+#   boards << convert_board(endgame[:board])
+#   labels << convert_result(endgame[:result])
+# end
 
 File.open(OUTPUTDIR + '/games.dat', 'w') do |f|
   f.write([boards.count].pack('N'))
