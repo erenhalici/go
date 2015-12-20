@@ -32,20 +32,20 @@ def extract_images(filename):
   print('Extracting', filename)
   with gzip.open(filename) as bytestream:
     num_images = _read32(bytestream)
-    num_images = 10000
+    # num_images = 80000
     print(num_images)
     # rows = _read32(bytestream)
     # cols = _read32(bytestream)
     rows = 19
     cols = 19
-    channels = 2
+    channels = 6
     buf = bytestream.read(rows * cols * num_images * channels)
     data = numpy.frombuffer(buf, dtype=numpy.uint8)
     print(data.size)
     data = data.reshape(num_images, rows, cols, channels)
     return data
 
-def dense_to_one_hot(labels_dense, num_classes=10):
+def dense_to_one_hot(labels_dense, num_classes=2):
   """Convert class labels from scalars to one-hot vectors."""
   num_labels = labels_dense.shape[0]
   index_offset = numpy.arange(num_labels) * num_classes
@@ -58,7 +58,7 @@ def extract_labels(filename, one_hot=False):
   print('Extracting', filename)
   with gzip.open(filename) as bytestream:
     num_items = _read32(bytestream)
-    num_items = 10000
+    # num_items = 80000
     buf = bytestream.read(num_items)
     labels = numpy.frombuffer(buf, dtype=numpy.uint8)
     if one_hot:
@@ -78,7 +78,7 @@ class DataSet(object):
       self._num_examples = images.shape[0]
       # Convert shape from [num examples, rows, columns, depth]
       # to [num examples, rows*columns] (assuming depth == 1)
-      assert images.shape[3] == 2
+      # assert images.shape[3] == 3
       # images = images.reshape(images.shape[0],
       #                         images.shape[1] * images.shape[2])
       # Convert from [0, 255] -> [0.0, 1.0].
@@ -150,10 +150,10 @@ def read_data_sets(train_dir, fake_data=False, one_hot=False):
   # train_images = train_images[VALIDATION_SIZE:]
   # train_labels = train_labels[VALIDATION_SIZE:]
 
-  test_images = train_images[:TEST_SIZE]
-  test_labels = train_labels[:TEST_SIZE]
-  train_images = train_images[TEST_SIZE:]
-  train_labels = train_labels[TEST_SIZE:]
+  test_images = train_images[-TEST_SIZE:]
+  test_labels = train_labels[-TEST_SIZE:]
+  train_images = train_images[:-TEST_SIZE]
+  train_labels = train_labels[:-TEST_SIZE]
 
   data_sets.train = DataSet(train_images, train_labels)
   # data_sets.validation = DataSet(validation_images, validation_labels)
