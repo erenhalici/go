@@ -45,16 +45,16 @@ W_conv2 = weight_variable([3, 3, 32, 64])
 b_conv2 = bias_variable([64])
 h_conv2 = tf.nn.relu(tf.nn.conv2d(h_conv1, W_conv2, strides=[1, 1, 1, 1], padding="VALID") + b_conv2)
 
-W_conv3 = weight_variable([3, 3, 64, 96])
-b_conv3 = bias_variable([96])
-h_conv3 = tf.nn.relu(tf.nn.conv2d(h_conv2, W_conv3, strides=[1, 1, 1, 1], padding="VALID") + b_conv3)
+# W_conv3 = weight_variable([3, 3, 64, 96])
+# b_conv3 = bias_variable([96])
+# h_conv3 = tf.nn.relu(tf.nn.conv2d(h_conv2, W_conv3, strides=[1, 1, 1, 1], padding="VALID") + b_conv3)
 
-W_fc1 = weight_variable([11 * 11 * 96, 1024])
+W_fc1 = weight_variable([13 * 13 * 64, 1024])
 b_fc1 = bias_variable([1024])
 
 # fc_input = tf.reshape(h_pool2, [-1, 4 * 4 * 64])
 
-fc_input = tf.reshape(h_conv3, [-1, 11 * 11 * 96])
+fc_input = tf.reshape(h_conv2, [-1, 13 * 13 * 64])
 
 h_fc1 = tf.nn.relu(tf.matmul(fc_input, W_fc1) + b_fc1)
 
