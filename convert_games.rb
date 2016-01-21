@@ -6,192 +6,21 @@ require './converter/game.rb'
 puts
 
 GAMESDIR = '/Users/erenhalici/Academic/tensorflow/usr/go/games'
-OUTPUTDIR = '/Users/erenhalici/Academic/tensorflow/usr/go/data/winner_full'
+OUTPUTDIR = '/Users/erenhalici/Academic/tensorflow/usr/go/data/winner_ko'
 
-FREE = ' '
-BLACK = '•'
-WHITE = 'o'
-
-count = 0
-
-def new_board
-  board = []
-
-  19.times do
-    row = []
-    19.times do
-      row << FREE
-    end
-    board << row
-  end
-
-  return board
-end
-
-def remove(board, row, col, type)
-  total = 0
-  if board[row][col] == type
-    total = 1
-    board[row][col] = FREE
-    total += remove(board, row - 1, col, type) if row > 0
-    total += remove(board, row + 1, col, type) if row < 18
-    total += remove(board, row, col - 1, type) if col > 0
-    total += remove(board, row, col + 1, type) if col < 18
-  end
-  return total
-end
-
-def dead?(board, row, col, type, visited)
-  return false if board[row][col] == FREE
-  return true if board[row][col] != type
-
-  return true if visited[[row,col]]
-  visited[[row,col]] = true
-
-  return false if row > 0  && !dead?(board, row - 1, col, type, visited)
-  return false if row < 18 && !dead?(board, row + 1, col, type, visited)
-  return false if col > 0  && !dead?(board, row, col - 1, type, visited)
-  return false if col < 18 && !dead?(board, row, col + 1, type, visited)
-
-  return true
-end
-
-def sanitize_board(board, row, col)
-  if board[row][col] == FREE
-    return 0
-  end
-
-  if dead?(board, row, col, board[row][col], {})
-    return ((board[row][col] == BLACK) ? -1 : 1) * remove(board, row, col, board[row][col])
-  end
-
-  return 0
-end
-
-def make_move(board, player, row, col)
-  board[row][col] = (player) ? BLACK : WHITE
-
-  total = 0
-
-  total += sanitize_board(board, row - 1, col) if row > 0
-  total += sanitize_board(board, row + 1, col) if row < 18
-  total += sanitize_board(board, row, col - 1) if col > 0
-  total += sanitize_board(board, row, col + 1) if col < 18
-
-  return total
-end
-
-def parsefile(file)
-  f = File.open(file)
-  input = f.read.encode('UTF-8', :invalid => :replace).gsub('(KGS)', '')
-  f.close
-  tokens = input.split(';')
-  info = tokens[1]
-
-  size = info[/SZ\[([^\]]*)\]/, 1]
-
-  if size && size != '19'
-    return nil
-  end
-
-  winner = info[/RE\[([BW])\+/, 1]
-  result = info[/RE\[[BW]\+(\d+(.\d+)?)\]/, 1]
-
-  # if !result
-  #   return nil
-  # end
-
-  # puts input
-
-  # result = result.to_f
-
-  # if winner == 'W'
-  #   result = -result
-  # end
-
-  if winner != 'B' && winner != 'W'
-    return nil
-  end
-
-  komi = info[/KM\[([^\]]*)\]/, 1]
-
-  # return komi
-
-  # if komi != '5.5'
-  #   return nil
-  # end
-
-  if komi
-    komi = komi.to_f
-  else
-    komi = 0.0
-  end
-
-  if (komi*2) % 1 != 0.0
-    return nil
-  end
-
-  # result += komi.to_f
-
-  # if result % 1 != 0.0
-  #   return nil
-  # end
-
-  add = input[/A[BW]\[(.*)\]/, 1]
-
-  if add
-    return nil
-  end
-
-  if input.count('(') != 1
-    return nil
-  end
-
-  if input.count(')') != 1
-    return nil
-  end
-
-  board = new_board
-
-  lost_pieces = 0
-
-  while !tokens.empty?
-    move = tokens.shift
-    player = move[/^[^A-Z]*([BW])\[([^\]]*)\]/, 1]
-    location = move[/^[^A-Z]*([BW])\[([^\]]*)\]/, 2]
-
-    if player && location != ''
-      lost_pieces += make_move(board, player=='B', location[1].ord - 'a'.ord, location[0].ord - 'a'.ord)
-    end
-  end
-
-  # if lost_pieces.abs > 5
-  #   return nil
-  # end
-
-  # result = result - lost_pieces
-  # puts board.map{|e| e.join('')}.join("\n")
-  # puts "pieces: #{lost_pieces}"
-  # puts "board state: #{result - lost_pieces}"
-  # puts "komi: #{komi}"
-  # puts result
-  # puts board.map{|e| e.join('')}.join("\n")
-  return {board: board, result: result, winner: winner, komi: komi, lost_pieces: lost_pieces}
-end
-
-
-def convert_board(board, lost_pieces, komi)
+def convert_board(board, captured, komi)
   count = 0
 
-  if (lost_pieces < 0)
+  captured -= komi
+  captured = captured * 2
+
+  if (captured < 0)
     lost_count_b = 0
-    lost_count_w = -lost_pieces
+    lost_count_w = -captured
   else
-    lost_count_b = lost_pieces
+    lost_count_b = captured
     lost_count_w = 0
   end
-
-  komi = komi*2
 
   board.map do |row|
     row.map do |e|
@@ -207,57 +36,18 @@ def convert_board(board, lost_pieces, komi)
         lost_w = 0
       end
 
-      if count < komi
-        k = 1
-      else
-        k = 0
-      end
-
       count += 1
 
       if e == BLACK
-        [1, 0, 0, lost_b, lost_w, k]
+        [1, 0, 0, 0, lost_b, lost_w]
       elsif e == WHITE
-        [0, 1, 0, lost_b, lost_w, k]
+        [0, 1, 0, 0, lost_b, lost_w]
+      elsif e == KO
+        [0, 0, 1, 0, lost_b, lost_w]
       else
-        [0, 0, 1, lost_b, lost_w, k]
+        [0, 0, 0, 1, lost_b, lost_w]
       end
     end
-  end
-end
-
-def convert_result(result)
-  # if result < -5
-  #   0
-  # elsif result < -3
-  #   1
-  # elsif result < -1
-  #   2
-  # elsif result <= 1
-  #   3
-  # elsif result <= 3
-  #   4
-  # elsif result <= 5
-  #   5
-  # elsif result <= 7
-  #   6
-  # elsif result <= 9
-  #   7
-  # elsif result <= 11
-  #   8
-  # else
-  #   9
-  # end
-  if result < -6
-    0
-  elsif result < -2
-    1
-  elsif result <= 2
-    2
-  elsif result <= 6
-    3
-  else
-    4
   end
 end
 
@@ -268,16 +58,6 @@ def convert_winner(winner)
     1
   end
 end
-
-total = 0
-# endgames = []
-boards = []
-labels = []
-
-games = Set.new
-
-# max = 0
-# min = 10000
 
 def filter(game)
   if game.size && game.size != '19'
@@ -307,10 +87,73 @@ def filter(game)
   return true
 end
 
-Dir.glob(GAMESDIR + '/**/*.sgf').each do |filename|
-  total += 1
 
-  puts total if total%10000 == 0
+def enumerate_games
+  total = 0
+  count = 0
+  games = Set.new
+
+  Dir.glob(GAMESDIR + '/**/*.sgf').each do |filename|
+    total += 1
+    puts total if total%10000 == 0
+
+    game = Game.new(filename)
+    if game.valid?
+      if filter(game)
+        if games.add?(game.moves.hash)
+          yield game
+          count += 1
+        end
+      end
+    end
+  end
+
+  puts count
+  puts total
+end
+
+labels = []
+
+enumerate_games do |game|
+  8.times {labels << convert_winner(game.winner)}
+end
+
+File.open(OUTPUTDIR + '/labels.dat', 'w') do |f|
+  f.write([labels.count].pack('N'))
+  f.write(labels.pack('C*'))
+end
+
+puts labels.count
+
+def board_combinations(board)
+  yield board
+  yield board.reverse
+  yield (board.map{|row| row.reverse}).reverse
+  yield board.map{|row| row.reverse}
+
+  yield board.transpose
+  yield board.transpose.reverse
+  yield (board.transpose.map{|row| row.reverse}).reverse
+  yield board.transpose.map{|row| row.reverse}
+end
+
+File.open(OUTPUTDIR + '/games.dat', 'w') do |f|
+  f.write([labels.count].pack('N'))
+  # f.write([819464].pack('N'))
+
+  enumerate_games do |game|
+    result = game.result
+    board_combinations(result[:board]) do |board|
+      f.write([convert_board(board, result[:captured], result[:komi])].flatten.pack('C*'))
+    end
+  end
+end
+
+
+# max = 0
+# min = 10000
+
+
 # if count < 2
   # begin
   #   endgame = parsefile(file)
@@ -377,27 +220,30 @@ Dir.glob(GAMESDIR + '/**/*.sgf').each do |filename|
   #       # end
   #     end
   #   end
-    game = Game.new(filename)
-    if game.valid?
-      if filter(game)
-        if games.add?(game.moves.hash)
-          game.moves.count.times do |move|
-            puts "------ Captured: #{game.captured} -------------------------"
-            game.print_board(game.board_for_move(move))
-          end
+#     game = Game.new(filename)
+#     if game.valid?
+#       if filter(game)
+#         if games.add?(game.moves.hash)
+#           # game.moves.count.times do |move|
+#           #   puts "------ Captured: #{game.captured} -------------------------"
+#           #   game.print_board(game.board_for_move(move))
+#           # end
 
-          count += 1
+#           # puts game.result
+#           game.result
 
-          if count == 2
-            1/0
-          end
-        end
-      end
-    end
-  # rescue
-  # end
+#           count += 1
+
+#           if count == 29
+#             1/0
+#           end
+#         end
+#       end
+#     end
+#   # rescue
+#   # end
+# # end
 # end
-end
 
 # puts max
 # puts min
@@ -418,6 +264,3 @@ end
 # end
 
 # puts boards[0][0].map{|e| e.join('')}.join("\n")
-
-puts count
-puts total

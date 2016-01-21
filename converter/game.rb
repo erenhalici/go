@@ -1,7 +1,10 @@
 
+# FREE = ' '
+# BLACK = 'B'
+# WHITE = 'W'
 FREE = ' '
-BLACK = 'B'
-WHITE = 'W'
+BLACK = '•'
+WHITE = 'o'
 KO = 'X'
 
 class Game
@@ -83,7 +86,15 @@ class Game
         end
 
         if location != ''
-          @moves << [location[1].ord - 'a'.ord, location[0].ord - 'a'.ord]
+          row = location[1].ord - 'a'.ord
+          col = location[0].ord - 'a'.ord
+
+          if row < 0 || row >= 19 || col < 0 || col >= 19
+            @valid = false
+            return
+          end
+
+          @moves << [row, col]
           # lost_pieces += make_move(board, player=='B', location[1].ord - 'a'.ord, location[0].ord - 'a'.ord)
         else
           @moves << nil
@@ -198,6 +209,11 @@ class Game
     clear_ko board
 
     move = @moves[index]
+
+    if !move
+      return
+    end
+
     row = move[0]
     col = move[1]
 
@@ -233,7 +249,31 @@ class Game
       make_move(board, index)
     end
 
-    return board
+    if move % 2 == 0
+      return board
+    else
+      return invert_board board
+    end
+  end
+
+  def invert_board(board)
+    puts "INVERTED"
+
+    board.map do |row|
+      row.map do |type|
+        if type == BLACK
+          WHITE
+        elsif type == WHITE
+          BLACK
+        else
+          type
+        end
+      end
+    end
+  end
+
+  def result
+    {board: board_for_move(@moves.count/2*2), winner: @winner, komi: @komi, captured: @captured}
   end
 
   def valid?

@@ -66,6 +66,14 @@ b_fc2 = bias_variable([2])
 
 y_conv = tf.nn.softmax(tf.matmul(h_fc1_drop, W_fc2) + b_fc2)
 
+
+confidence = tf.placeholder("float")
+y_confident = tf.greater(y_conv, confidence)
+total_prediction = tf.reduce_sum(tf.cast(y_confident, "float"))
+confident_prediction = tf.reduce_sum(tf.cast(tf.logical_and(y_confident, tf.equal(y_,1)),"float"))
+# confident_accuracy = tf.div(tf.reduce_sum(tf.cast(confident_prediction, "float")), total_prediction)
+confident_accuracy = tf.div(confident_prediction, total_prediction)
+
 cross_entropy = -tf.reduce_sum(y_*tf.log(tf.clip_by_value(y_conv,1e-10,1.0)))
 train_step = tf.train.AdamOptimizer(learning_rate=1e-4, beta1=0.9, beta2=0.999, epsilon=1e-4).minimize(cross_entropy)
 # train_step = tf.train.AdagradOptimizer(learning_rate=1e-4).minimize(cross_entropy)
@@ -86,9 +94,24 @@ summary_writer = tf.train.SummaryWriter(DATA_DIR + "/logs", sess.graph_def)
 
 sess.run(tf.initialize_all_variables())
 
-# if os.path.isfile(DATA_DIR + "model.ckpt"):
-#   saver.restore(sess, DATA_DIR + "model.ckpt")
+# if os.path.isfile(DATA_DIR + "model_200000.ckpt"):
+#   saver.restore(sess, DATA_DIR + "model_200000.ckpt")
 #   print("Model restored.")
+
+writer = tf.train.SummaryWriter('logs')
+filters = tf.transpose(W_conv1, [3, 0, 1, 2])
+
+for i in range(6):
+  summary_str = sess.run(tf.image_summary('Convolutional Layer ' + str(i), tf.split(3, 6, filters)[i], 32))
+  writer.add_summary(summary_str)
+
+writer.flush()
+writer.close()
+
+
+if os.path.isfile("data/winner_full/models/model_300000.ckpt"):
+  saver.restore(sess, "data/winner_full/models/model_300000.ckpt")
+  print("Model restored.")
 
 for i in range(100000):
   batch = eren_go.train.next_batch(128)
@@ -107,8 +130,10 @@ for i in range(100000):
   # sess.run(train_step, feed_dict={x_image: batch[0], y_: batch[1], keep_prob: 1.0})
 
 
-print "test accuracy %g"%sess.run(accuracy, feed_dict={
-    x_image: eren_go.test.images, y_: eren_go.test.labels, keep_prob: 1.0})
+print "test accuracy %g"%sess.run(accuracy, feed_dict={x_image: eren_go.test.images, y_: eren_go.test.labels, keep_prob: 1.0})
+
+
+
 
 save_path = saver.save(sess, DATA_DIR + "model.ckpt")
 print("Model saved in file: ", save_path)
