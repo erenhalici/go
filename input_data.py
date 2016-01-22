@@ -32,13 +32,10 @@ def extract_images(filename):
   print('Extracting', filename)
   with gzip.open(filename) as bytestream:
     num_images = _read32(bytestream)
-    # num_images = 80000
     print(num_images)
-    # rows = _read32(bytestream)
-    # cols = _read32(bytestream)
     rows = 19
     cols = 19
-    channels = 7
+    channels = 8
     buf = bytestream.read(rows * cols * num_images * channels)
     data = numpy.frombuffer(buf, dtype=numpy.uint8)
     print(data.size)
@@ -58,7 +55,6 @@ def extract_labels(filename, one_hot=False):
   print('Extracting', filename)
   with gzip.open(filename) as bytestream:
     num_items = _read32(bytestream)
-    # num_items = 80000
     buf = bytestream.read(num_items*2)
     dt = numpy.dtype(numpy.uint16).newbyteorder('>')
     labels = numpy.frombuffer(buf, dtype=dt)
@@ -66,18 +62,6 @@ def extract_labels(filename, one_hot=False):
     if one_hot:
       return dense_to_one_hot(labels, 361)
     return labels
-
-# def extract_labels(filename, one_hot=False):
-#   """Extract the labels into a 1D uint8 numpy array [index]."""
-#   print('Extracting', filename)
-#   with gzip.open(filename) as bytestream:
-#     num_items = _read32(bytestream)
-#     # num_items = 80000
-#     buf = bytestream.read(num_items)
-#     labels = numpy.frombuffer(buf, dtype=numpy.uint8)
-#     if one_hot:
-#       return dense_to_one_hot(labels)
-#     return labels
 
 class DataSet(object):
   def __init__(self, images, labels, fake_data=False, one_hot=False):
@@ -90,14 +74,7 @@ class DataSet(object):
           'images.shape: %s labels.shape: %s' % (images.shape,
                                                  labels.shape))
       self._num_examples = images.shape[0]
-      # Convert shape from [num examples, rows, columns, depth]
-      # to [num examples, rows*columns] (assuming depth == 1)
-      # assert images.shape[3] == 3
-      # images = images.reshape(images.shape[0],
-      #                         images.shape[1] * images.shape[2])
-      # Convert from [0, 255] -> [0.0, 1.0].
       images = images.astype(numpy.float32)
-      # images = numpy.multiply(images, 1.0 / 255.0)
     self._images = images
     self._labels = labels
     self._epochs_completed = 0

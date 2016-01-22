@@ -272,7 +272,7 @@ File.open(OUTPUTDIR + '/games.dat', 'w') do |f|
       # end
 
       f.write(convert_board(result[:board], result[:captured], result[:komi], index).pack('C*'))
-
+      total_moves += 1
       index += 1
     end
   end
