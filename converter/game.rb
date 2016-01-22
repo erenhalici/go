@@ -249,16 +249,16 @@ class Game
       make_move(board, index)
     end
 
-    if move % 2 == 0
-      return board
-    else
-      return invert_board board
-    end
+    # if move % 2 == 0
+    #   return board
+    # else
+    #   return invert_board board
+    # end
+
+    return board
   end
 
   def invert_board(board)
-    puts "INVERTED"
-
     board.map do |row|
       row.map do |type|
         if type == BLACK
@@ -272,8 +272,38 @@ class Game
     end
   end
 
+  # def result_for_move(move)
+  #   board = board_for_move(move)
+
+  #   if (move%2 == 0)
+  #     {board: board, komi: @komi, captured: @captured}
+  #   else
+  #     {board: invert_board(board), komi: @komi, captured: @captured}
+  #   end
+  # end
+
+  def enumerate_board_states
+    board = new_board
+    @captured = 0
+
+    results = []
+
+    @moves.count.times do |index|
+      if @moves[index]
+        if (index%2 == 0)
+          yield ({board: board, komi: @komi, captured: @captured})
+        else
+          yield ({board: invert_board(board), komi: @komi, captured: @captured})
+        end
+      end
+
+      make_move(board, index)
+    end
+  end
+
   def result
-    {board: board_for_move(@moves.count/2*2), winner: @winner, komi: @komi, captured: @captured}
+    # {board: board_for_move(@moves.count/2*2), komi: @komi, captured: @captured}
+    {board: board_for_move(@moves.count), komi: @komi, captured: @captured}
   end
 
   def valid?

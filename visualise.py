@@ -26,10 +26,12 @@ eren_go = input_data.read_data_sets(DATA_DIR, one_hot=True)
 b = tf.Variable(tf.zeros([2]))
 y_ = tf.placeholder(tf.float32, [None, 2])
 
-W_conv1 = weight_variable([5, 5, 6, 32])
+# W_conv1 = weight_variable([5, 5, 6, 32])
+W_conv1 = weight_variable([5, 5, 7, 32])
 b_conv1 = bias_variable([32])
 
-x_image = tf.placeholder(tf.float32, [None, 19, 19, 6])
+# x_image = tf.placeholder(tf.float32, [None, 19, 19, 6])
+x_image = tf.placeholder(tf.float32, [None, 19, 19, 7])
 
 h_conv1 = tf.nn.relu(tf.nn.conv2d(x_image, W_conv1, strides=[1, 1, 1, 1], padding="VALID") + b_conv1)
 # h_conv1 = tf.nn.relu(conv2d(x_image, W_conv1) + b_conv1)

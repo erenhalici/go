@@ -18,7 +18,7 @@ def max_pool_2x2(x):
                         strides=[1, 2, 2, 1], padding="SAME")
 
 
-DATA_DIR = "data/winner_ko/"
+DATA_DIR = "data/moves/"
 
 eren_go = input_data.read_data_sets(DATA_DIR, one_hot=True)
 
@@ -26,10 +26,12 @@ eren_go = input_data.read_data_sets(DATA_DIR, one_hot=True)
 b = tf.Variable(tf.zeros([2]))
 y_ = tf.placeholder(tf.float32, [None, 2])
 
-W_conv1 = weight_variable([5, 5, 6, 32])
+# W_conv1 = weight_variable([5, 5, 6, 32])
+W_conv1 = weight_variable([5, 5, 7, 32])
 b_conv1 = bias_variable([32])
 
-x_image = tf.placeholder(tf.float32, [None, 19, 19, 6])
+# x_image = tf.placeholder(tf.float32, [None, 19, 19, 6])
+x_image = tf.placeholder(tf.float32, [None, 19, 19, 7])
 
 h_conv1 = tf.nn.relu(tf.nn.conv2d(x_image, W_conv1, strides=[1, 1, 1, 1], padding="VALID") + b_conv1)
 # h_conv1 = tf.nn.relu(conv2d(x_image, W_conv1) + b_conv1)
@@ -61,8 +63,8 @@ h_fc1 = tf.nn.relu(tf.matmul(fc_input, W_fc1) + b_fc1)
 keep_prob = tf.placeholder("float")
 h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob)
 
-W_fc2 = weight_variable([1024, 2])
-b_fc2 = bias_variable([2])
+W_fc2 = weight_variable([1024, 361])
+b_fc2 = bias_variable([361])
 
 y_conv = tf.nn.softmax(tf.matmul(h_fc1_drop, W_fc2) + b_fc2)
 
@@ -90,7 +92,7 @@ sess.run(tf.initialize_all_variables())
 #   saver.restore(sess, DATA_DIR + "model.ckpt")
 #   print("Model restored.")
 
-for i in range(100000):
+for i in range(300000):
   batch = eren_go.train.next_batch(128)
   if i%1000 == 0:
     print "test accuracy %g"%sess.run(accuracy, feed_dict={

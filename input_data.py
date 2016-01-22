@@ -38,7 +38,7 @@ def extract_images(filename):
     # cols = _read32(bytestream)
     rows = 19
     cols = 19
-    channels = 6
+    channels = 7
     buf = bytestream.read(rows * cols * num_images * channels)
     data = numpy.frombuffer(buf, dtype=numpy.uint8)
     print(data.size)
@@ -59,11 +59,25 @@ def extract_labels(filename, one_hot=False):
   with gzip.open(filename) as bytestream:
     num_items = _read32(bytestream)
     # num_items = 80000
-    buf = bytestream.read(num_items)
-    labels = numpy.frombuffer(buf, dtype=numpy.uint8)
+    buf = bytestream.read(num_items*2)
+    dt = numpy.dtype(numpy.uint16).newbyteorder('>')
+    labels = numpy.frombuffer(buf, dtype=dt)
+
     if one_hot:
-      return dense_to_one_hot(labels)
+      return dense_to_one_hot(labels, 361)
     return labels
+
+# def extract_labels(filename, one_hot=False):
+#   """Extract the labels into a 1D uint8 numpy array [index]."""
+#   print('Extracting', filename)
+#   with gzip.open(filename) as bytestream:
+#     num_items = _read32(bytestream)
+#     # num_items = 80000
+#     buf = bytestream.read(num_items)
+#     labels = numpy.frombuffer(buf, dtype=numpy.uint8)
+#     if one_hot:
+#       return dense_to_one_hot(labels)
+#     return labels
 
 class DataSet(object):
   def __init__(self, images, labels, fake_data=False, one_hot=False):
