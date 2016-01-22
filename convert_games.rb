@@ -6,9 +6,9 @@ require './converter/game.rb'
 puts
 
 GAMESDIR = '/Users/erenhalici/Academic/tensorflow/usr/go/games'
-OUTPUTDIR = '/Users/erenhalici/Academic/tensorflow/usr/go/data/moves'
+OUTPUTDIR = '/Users/erenhalici/Academic/tensorflow/usr/go/data/moves_single'
 
-def convert_board(board, lost_pieces, komi)
+def convert_board(board, lost_pieces, komi, index)
   count = 0
 
   if (lost_pieces < 0)
@@ -79,13 +79,13 @@ def convert_board(board, lost_pieces, komi)
       count += 1
 
       if e == BLACK
-        flat.push(*[1, 0, 0, 0, lost_b, lost_w, k])
+        flat.push(*[1, 0, 0, 0, lost_b, lost_w, k, index%2])
       elsif e == WHITE
-        flat.push(*[0, 1, 0, 0, lost_b, lost_w, k])
+        flat.push(*[0, 1, 0, 0, lost_b, lost_w, k, index%2])
       elsif e == KO
-        flat.push(*[0, 0, 1, 0, lost_b, lost_w, k])
+        flat.push(*[0, 0, 1, 0, lost_b, lost_w, k, index%2])
       else
-        flat.push(*[0, 0, 0, 1, lost_b, lost_w, k])
+        flat.push(*[0, 0, 0, 1, lost_b, lost_w, k, index%2])
       end
     end
   end
@@ -126,7 +126,7 @@ def filter(game)
     return false
   end
 
-  if game.white_rank && game.white_rank > 8 && game.black_rank && game.black_rank > 8
+  if game.white_rank && game.white_rank > 7 && game.black_rank && game.black_rank > 7
     return true
   end
 
@@ -147,7 +147,6 @@ def convert_move(move)
   # board[move[0]][move[1]] = 1
 
   # return board
-  puts "#{move[0]}, #{move[1]}"
   move[0] * 19 + move[1]
 end
 
@@ -165,7 +164,6 @@ def enumerate_games
         if games.add?(game.moves.hash)
           yield game
           count +=1
-          1/0
         end
       end
     end
@@ -229,9 +227,17 @@ enumerate_games do |game|
   game.moves.count.times do |index|
     move = game.moves[index]
     if move
-      move_combinations(move) do |m|
-        moves << convert_move(m)
-      end
+      # move_combinations(move) do |m|
+      #   moves << convert_move(m)
+      # end
+
+      # if move%2 == 0
+      #   moves << convert_move(move)
+      # else
+      #   moves << convert_move([18-move[0], 18-move[1]])
+      # end
+
+      moves << convert_move(move)
     end
   end
 end
@@ -246,22 +252,31 @@ end
 
 moves = nil
 
-# moves_count = 175960904
 puts "#{moves_count} moves"
 
-# total_moves = 0
-# File.open(OUTPUTDIR + '/games.dat', 'w') do |f|
-#   f.write([moves_count].pack('N'))
+total_moves = 0
+File.open(OUTPUTDIR + '/games.dat', 'w') do |f|
+  f.write([moves_count].pack('N'))
 
-#   enumerate_games do |game|
-#     game.enumerate_board_states do |result|
-#       board_combinations(result[:board]) do |board|
-#         f.write(convert_board(board, result[:captured], result[:komi]).pack('C*'))
-#         total_moves += 1
-#       end
-#     end
-#   end
-# end
+  enumerate_games do |game|
+    index = 0
+    game.enumerate_board_states do |result|
+      # board_combinations(result[:board]) do |board|
+      #   f.write(convert_board(board, result[:captured], result[:komi]).pack('C*'))
+      #   total_moves += 1
+      # end
+      # if index%2 == 0
+      #   board = result[:board]
+      # else
+      #   board = (result[:board].map{|row| row.reverse}).reverse
+      # end
 
-# puts "#{total_moves} moves"
+      f.write(convert_board(result[:board], result[:captured], result[:komi], index).pack('C*'))
+
+      index += 1
+    end
+  end
+end
+
+puts "#{total_moves} moves"
 

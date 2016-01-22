@@ -18,20 +18,20 @@ def max_pool_2x2(x):
                         strides=[1, 2, 2, 1], padding="SAME")
 
 
-DATA_DIR = "data/moves/"
+DATA_DIR = "data/moves_single/"
 
 eren_go = input_data.read_data_sets(DATA_DIR, one_hot=True)
 
 
-b = tf.Variable(tf.zeros([2]))
-y_ = tf.placeholder(tf.float32, [None, 2])
+b = tf.Variable(tf.zeros([361]))
+y_ = tf.placeholder(tf.float32, [None, 361])
 
 # W_conv1 = weight_variable([5, 5, 6, 32])
-W_conv1 = weight_variable([5, 5, 7, 32])
+W_conv1 = weight_variable([5, 5, 8, 32])
 b_conv1 = bias_variable([32])
 
 # x_image = tf.placeholder(tf.float32, [None, 19, 19, 6])
-x_image = tf.placeholder(tf.float32, [None, 19, 19, 7])
+x_image = tf.placeholder(tf.float32, [None, 19, 19, 8])
 
 h_conv1 = tf.nn.relu(tf.nn.conv2d(x_image, W_conv1, strides=[1, 1, 1, 1], padding="VALID") + b_conv1)
 # h_conv1 = tf.nn.relu(conv2d(x_image, W_conv1) + b_conv1)
@@ -47,16 +47,14 @@ W_conv2 = weight_variable([3, 3, 32, 64])
 b_conv2 = bias_variable([64])
 h_conv2 = tf.nn.relu(tf.nn.conv2d(h_conv1, W_conv2, strides=[1, 1, 1, 1], padding="VALID") + b_conv2)
 
-# W_conv3 = weight_variable([3, 3, 64, 96])
-# b_conv3 = bias_variable([96])
-# h_conv3 = tf.nn.relu(tf.nn.conv2d(h_conv2, W_conv3, strides=[1, 1, 1, 1], padding="VALID") + b_conv3)
+W_conv3 = weight_variable([3, 3, 64, 96])
+b_conv3 = bias_variable([96])
+h_conv3 = tf.nn.relu(tf.nn.conv2d(h_conv2, W_conv3, strides=[1, 1, 1, 1], padding="VALID") + b_conv3)
 
-W_fc1 = weight_variable([13 * 13 * 64, 1024])
+W_fc1 = weight_variable([11 * 11 * 96, 1024])
 b_fc1 = bias_variable([1024])
 
-# fc_input = tf.reshape(h_pool2, [-1, 4 * 4 * 64])
-
-fc_input = tf.reshape(h_conv2, [-1, 13 * 13 * 64])
+fc_input = tf.reshape(h_conv3, [-1, 11 * 11 * 96])
 
 h_fc1 = tf.nn.relu(tf.matmul(fc_input, W_fc1) + b_fc1)
 
@@ -70,7 +68,6 @@ y_conv = tf.nn.softmax(tf.matmul(h_fc1_drop, W_fc2) + b_fc2)
 
 cross_entropy = -tf.reduce_sum(y_*tf.log(tf.clip_by_value(y_conv,1e-10,1.0)))
 train_step = tf.train.AdamOptimizer(learning_rate=1e-4, beta1=0.9, beta2=0.999, epsilon=1e-4).minimize(cross_entropy)
-# train_step = tf.train.AdagradOptimizer(learning_rate=1e-4).minimize(cross_entropy)
 correct_prediction = tf.equal(tf.argmax(y_conv,1), tf.argmax(y_,1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
 
@@ -78,12 +75,9 @@ saver = tf.train.Saver()
 # filter_summary = tf.image_summary("conv1", tf.split(3,32,W_conv1)[0])
 w_hist = tf.histogram_summary("weights", W_conv1)
 
-# init = tf.initialize_all_variables()
 sess = tf.Session()
-# sess.run(init)
 
 merged = tf.merge_all_summaries()
-# summary_writer = tf.train.SummaryWriter(DATA_DIR + "/logs", sess.graph_def)
 summary_writer = tf.train.SummaryWriter(DATA_DIR + "/logs", sess.graph_def)
 
 sess.run(tf.initialize_all_variables())

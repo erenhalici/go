@@ -290,11 +290,11 @@ class Game
 
     @moves.count.times do |index|
       if @moves[index]
-        if (index%2 == 0)
+        # if (index%2 == 0)
           yield ({board: board, komi: @komi, captured: @captured})
-        else
-          yield ({board: invert_board(board), komi: @komi, captured: @captured})
-        end
+        # else
+        #   yield ({board: invert_board(board), komi: @komi, captured: @captured})
+        # end
       end
 
       make_move(board, index)
