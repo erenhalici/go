@@ -23,11 +23,10 @@ from six.moves import urllib
 from six.moves import xrange  # pylint: disable=redefined-builtin
 
 def _read32(bytestream):
-  # dt = numpy.dtype(numpy.uint32)
   dt = numpy.dtype(numpy.uint32).newbyteorder('>')
   return numpy.frombuffer(bytestream.read(4), dtype=dt)[0]
 
-def extract_images(filename):
+def extract_images(filename, num_input_layers):
   """Extract the images into a 4D uint8 numpy array [index, y, x, depth]."""
   print('Extracting', filename)
   with gzip.open(filename) as bytestream:
@@ -35,7 +34,7 @@ def extract_images(filename):
     print(num_images)
     rows = 19
     cols = 19
-    channels = 8
+    channels = num_input_layers
     buf = bytestream.read(rows * cols * num_images * channels)
     data = numpy.frombuffer(buf, dtype=numpy.uint8)
     print(data.size)
@@ -50,7 +49,7 @@ def dense_to_one_hot(labels_dense, num_classes=2):
   labels_one_hot.flat[index_offset + labels_dense.ravel()] = 1
   return labels_one_hot
 
-def extract_labels(filename, one_hot=False):
+def extract_labels(filename):
   """Extract the labels into a 1D uint8 numpy array [index]."""
   print('Extracting', filename)
   with gzip.open(filename) as bytestream:
@@ -58,23 +57,17 @@ def extract_labels(filename, one_hot=False):
     buf = bytestream.read(num_items*2)
     dt = numpy.dtype(numpy.uint16).newbyteorder('>')
     labels = numpy.frombuffer(buf, dtype=dt)
-
-    if one_hot:
-      return dense_to_one_hot(labels, 361)
-    return labels
+    return dense_to_one_hot(labels, 361)
 
 class DataSet(object):
-  def __init__(self, images, labels, fake_data=False, one_hot=False):
+  def __init__(self, images, labels):
     """Construct a DataSet. one_hot arg is used only if fake_data is true."""
-    if fake_data:
-      self._num_examples = 10000
-      self.one_hot = one_hot
-    else:
-      assert images.shape[0] == labels.shape[0], (
-          'images.shape: %s labels.shape: %s' % (images.shape,
-                                                 labels.shape))
-      self._num_examples = images.shape[0]
-      images = images.astype(numpy.float32)
+
+    assert images.shape[0] == labels.shape[0], (
+        'images.shape: %s labels.shape: %s' % (images.shape,
+                                               labels.shape))
+    self._num_examples = images.shape[0]
+    images = images.astype(numpy.float32)
     self._images = images
     self._labels = labels
     self._epochs_completed = 0
@@ -91,16 +84,8 @@ class DataSet(object):
   @property
   def epochs_completed(self):
     return self._epochs_completed
-  def next_batch(self, batch_size, fake_data=False):
+  def next_batch(self, batch_size):
     """Return the next `batch_size` examples from this data set."""
-    if fake_data:
-      fake_image = [1] * 784
-      if self.one_hot:
-        fake_label = [1] + [0] * 9
-      else:
-        fake_label = 0
-      return [fake_image for _ in xrange(batch_size)], [
-          fake_label for _ in xrange(batch_size)]
     start = self._index_in_epoch
     self._index_in_epoch += batch_size
     if self._index_in_epoch > self._num_examples:
@@ -119,32 +104,28 @@ class DataSet(object):
     return self._images[start:end], self._labels[start:end]
 
 
-def read_data_sets(train_dir, fake_data=False, one_hot=False):
+def read_data_sets(train_dir, num_input_layers):
   class DataSets(object):
     pass
   data_sets = DataSets()
-  if fake_data:
-    data_sets.train = DataSet([], [], fake_data=True, one_hot=one_hot)
-    data_sets.validation = DataSet([], [], fake_data=True, one_hot=one_hot)
-    data_sets.test = DataSet([], [], fake_data=True, one_hot=one_hot)
-    return data_sets
+
   GAMES = 'games.dat.gz'
   RESULTS = 'labels.dat.gz'
   VALIDATION_SIZE = 5000
   TEST_SIZE = 5000
 
-  train_images = extract_images(os.path.join(train_dir, GAMES))
-  train_labels = extract_labels(os.path.join(train_dir, RESULTS), one_hot=one_hot)
+  images = extract_images(os.path.join(train_dir, GAMES), num_input_layers)
+  labels = extract_labels(os.path.join(train_dir, RESULTS))
 
-  # validation_images = train_images[:VALIDATION_SIZE]
-  # validation_labels = train_labels[:VALIDATION_SIZE]
-  # train_images = train_images[VALIDATION_SIZE:]
-  # train_labels = train_labels[VALIDATION_SIZE:]
+  # validation_images = images[:VALIDATION_SIZE]
+  # validation_labels = labels[:VALIDATION_SIZE]
+  # train_images = images[VALIDATION_SIZE:]
+  # train_labels = labels[VALIDATION_SIZE:]
 
-  test_images = train_images[-TEST_SIZE:]
-  test_labels = train_labels[-TEST_SIZE:]
-  train_images = train_images[:-TEST_SIZE]
-  train_labels = train_labels[:-TEST_SIZE]
+  test_images = images[-TEST_SIZE:]
+  test_labels = labels[-TEST_SIZE:]
+  train_images = images[:-TEST_SIZE]
+  train_labels = labels[:-TEST_SIZE]
 
   data_sets.train = DataSet(train_images, train_labels)
   # data_sets.validation = DataSet(validation_images, validation_labels)
