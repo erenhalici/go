@@ -119,14 +119,20 @@ def read_data_sets(train_dir, num_input_layers):
   images = extract_images(os.path.join(train_dir, GAMES), num_input_layers)
   labels = extract_labels(os.path.join(train_dir, RESULTS))
   
-  images = numpy.concatenate((images,images[::-1,::-1,::-1,:]))
-  labels = numpy.vstack((labels, labels[::-1,::-1]))
+#  images = numpy.concatenate((images,images[::-1,::-1,::-1,:]))
+#  labels = numpy.vstack((labels, labels[::-1,::-1]))
 
-  train_images = images[TEST_SIZE:(images.shape[0]-TEST_SIZE)]
-  train_labels = labels[TEST_SIZE:(labels.shape[0]-TEST_SIZE)]
+#  train_images = images[TEST_SIZE:(images.shape[0]-TEST_SIZE)]
+#  train_labels = labels[TEST_SIZE:(labels.shape[0]-TEST_SIZE)]
 
-  test_images = numpy.concatenate((images[:TEST_SIZE], images[(images.shape[0]-TEST_SIZE):]))
-  test_labels = numpy.concatenate((labels[:TEST_SIZE], labels[(labels.shape[0]-TEST_SIZE):]))
+#  test_images = numpy.concatenate((images[:TEST_SIZE], images[(images.shape[0]-TEST_SIZE):]))
+#  test_labels = numpy.concatenate((labels[:TEST_SIZE], labels[(labels.shape[0]-TEST_SIZE):]))
+
+  test_images = images[-TEST_SIZE:]
+  test_labels = labels[-TEST_SIZE:]
+
+  train_images = images[:-TEST_SIZE]
+  train_labels = labels[:-TEST_SIZE]
 
   data_sets.train = DataSet(train_images, train_labels)
   data_sets.test = DataSet(test_images, test_labels)

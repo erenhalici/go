@@ -51,7 +51,7 @@ def filter(game)
     return false
   end
 
-  if game.date && Time.new(game.date).year < 1900
+  if game.date && Time.new(game.date).year < 1800
     return false
   end
 
@@ -71,7 +71,7 @@ def filter(game)
   #   return false
   # end
 
-  if game.white_rank && game.white_rank > 8 && game.black_rank && game.black_rank > 8
+  if (game.white_rank && game.white_rank > 8) || (game.black_rank && game.black_rank > 8)
     return true
   end
 
@@ -136,7 +136,7 @@ enumerate_games do |game|
       #   moves << convert_move(m)
       # end
       moves << convert_move(move)
-      moves << convert_move([move[1], move[0]])
+      # moves << convert_move([move[1], move[0]])
     end
   end
 end
@@ -164,13 +164,14 @@ File.open(OUTPUTDIR + '/games.dat', 'w') do |f|
       # end
       if result[:player] == 0
         f.write(convert_board(result[:board], result[:captured], result[:komi]).pack('C*'))
-        f.write(convert_board(result[:board].transpose, result[:captured], result[:komi]).pack('C*'))
+        # f.write(convert_board(result[:board].transpose, result[:captured], result[:komi]).pack('C*'))
       else
         f.write(convert_board(Board.invert_board(result[:board]), -result[:captured], -result[:komi]).pack('C*'))
-        f.write(convert_board(Board.invert_board(result[:board].transpose), -result[:captured], -result[:komi]).pack('C*'))
+        # f.write(convert_board(Board.invert_board(result[:board].transpose), -result[:captured], -result[:komi]).pack('C*'))
       end
 
-      total_moves += 2
+      total_moves += 1
+      # total_moves += 2
     end
   end
 end
