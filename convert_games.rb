@@ -73,17 +73,17 @@ def filter(game)
     return false
   end
 
-  if game.win_by_time
-    return false
-  end
+  # if game.win_by_time
+  #   return false
+  # end
 
   if (game.komi*2) % 1 != 0.0
     return false
   end
 
-  if game.moves.count < 100
-    return false
-  end
+  # if game.moves.count < 100
+  #   return false
+  # end
 
   if game.white_rank && game.white_rank > 7 && game.black_rank && game.black_rank > 7
     return true

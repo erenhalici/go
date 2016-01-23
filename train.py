@@ -1,6 +1,21 @@
 import input_data
 import tensorflow as tf
 import os.path
+import argparse
+
+parser = argparse.ArgumentParser(description='Train a DCNN to learn how to play Go.')
+
+parser.add_argument('--data-dir', help='Data directory (default: data/moves_single)', dest='data_dir')
+parser.add_argument('--num-layers', default=8, type=int, help='Number of input layers (default: 8)', dest='num_input_layers')
+parser.add_argument('--num-steps', default=300000, type=int, help='Number of steps of execution (default: 300000)', dest='num_steps')
+parser.add_argument('--filter-depths', nargs='+', default=[32, 64, 96], type=int, help='Depths of the convolutions layers  (default: [32, 64, 96])', dest='filter_depths')
+parser.add_argument('--fc-size', type=int, help='Number neurons in the fully connected layer (if none is given, no fully connected layer)', dest='fc_size')
+parser.add_argument('--dropout', type=float, help='Dropout (if none is given, no dropout)', dest='dropout')
+
+args = parser.parse_args()
+
+print args.filter_depths
+print args.fc_size
 
 def weight_variable(shape):
   initial = tf.truncated_normal(shape, stddev=0.1)
@@ -13,46 +28,58 @@ def bias_variable(shape):
 def conv2d(x, W):
   return tf.nn.conv2d(x, W, strides=[1, 1, 1, 1], padding="VALID")
 
-def max_pool_2x2(x):
-  return tf.nn.max_pool(x, ksize=[1, 2, 2, 1],
-                        strides=[1, 2, 2, 1], padding="SAME")
 
-DATA_DIR = "data/moves_single/"
-NUM_INPUT_LAYERS = 8
-NUM_STEPS = 300000
-
-data_set = input_data.read_data_sets(DATA_DIR, NUM_INPUT_LAYERS)
+data_set = input_data.read_data_sets(args.data_dir, args.num_input_layers)
 
 b = tf.Variable(tf.zeros([361]))
 y_ = tf.placeholder(tf.float32, [None, 361])
 
-x_image = tf.placeholder(tf.float32, [None, 19, 19, NUM_INPUT_LAYERS])
+x_image = tf.placeholder(tf.float32, [None, 19, 19, args.num_input_layers])
 
-W_conv1 = weight_variable([5, 5, NUM_INPUT_LAYERS, 32])
-b_conv1 = bias_variable([32])
-h_conv1 = tf.nn.relu(conv2d(x_image, W_conv1) + b_conv1)
+last_depth = args.filter_depths.pop(0)
 
-W_conv2 = weight_variable([3, 3, 32, 64])
-b_conv2 = bias_variable([64])
-h_conv2 = tf.nn.relu(conv2d(h_conv1, W_conv2) + b_conv2)
+W_conv = weight_variable([5, 5, args.num_input_layers, last_depth])
+b_conv = bias_variable([last_depth])
+last_h_conv = tf.nn.relu(conv2d(x_image, W_conv) + b_conv)
 
-W_conv3 = weight_variable([3, 3, 64, 96])
-b_conv3 = bias_variable([96])
-h_conv3 = tf.nn.relu(conv2d(h_conv2, W_conv3) + b_conv3)
+size = 15
 
-W_fc1 = weight_variable([11 * 11 * 96, 1024])
-b_fc1 = bias_variable([1024])
-fc_input = tf.reshape(h_conv3, [-1, 11 * 11 * 96])
+while args.filter_depths:
+  depth = args.filter_depths.pop(0)
 
-h_fc1 = tf.nn.relu(tf.matmul(fc_input, W_fc1) + b_fc1)
+  W_conv = weight_variable([3, 3, last_depth, depth])
+  b_conv = bias_variable([depth])
+  h_conv = tf.nn.relu(conv2d(last_h_conv, W_conv) + b_conv)
 
+  last_depth = depth
+  last_h_conv = h_conv
+
+  size -= 2
+
+conv_output = tf.reshape(last_h_conv, [-1, size * size * last_depth])
 keep_prob = tf.placeholder("float")
-h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob)
 
-W_fc2 = weight_variable([1024, 361])
-b_fc2 = bias_variable([361])
+if args.fc_size:
+  W_fc = weight_variable([size * size * last_depth, args.fc_size])
+  b_fc = bias_variable([args.fc_size])
+  softmax_input = tf.nn.relu(tf.matmul(conv_output, W_fc) + b_fc)
+  softmax_input_size = args.fc_size
+else:
+  softmax_input = conv_output
+  softmax_input_size = size * size * last_depth
 
-y_conv = tf.nn.softmax(tf.matmul(h_fc1_drop, W_fc2) + b_fc2)
+if args.dropout:
+  softmax_input_drop = tf.nn.dropout(softmax_input, keep_prob)
+else:
+  softmax_input_drop = softmax_input
+
+W_softmax = weight_variable([softmax_input_size, 361])
+b_softmax = bias_variable([361])
+
+y_conv = tf.nn.softmax(tf.matmul(softmax_input_drop, W_softmax) + b_softmax)
+
+print size
+print softmax_input_size
 
 cross_entropy = -tf.reduce_sum(y_*tf.log(tf.clip_by_value(y_conv,1e-10,1.0)))
 train_step = tf.train.AdamOptimizer(learning_rate=1e-4, beta1=0.9, beta2=0.999, epsilon=1e-4).minimize(cross_entropy)
@@ -64,16 +91,17 @@ saver = tf.train.Saver()
 sess = tf.Session()
 sess.run(tf.initialize_all_variables())
 
-# if os.path.isfile(DATA_DIR + "model.ckpt"):
-#   saver.restore(sess, DATA_DIR + "model.ckpt")
+# if os.path.isfile(args.data_dir + "model.ckpt"):
+#   saver.restore(sess, args.data_dir + "model.ckpt")
 #   print("Model restored.")
 
-for i in range(NUM_STEPS):
+for i in range(args.num_steps):
   batch = data_set.train.next_batch(128)
   if i%1000 == 0:
+    print("epoch: {}".format(data_set.train.epochs_completed))
     print "test accuracy %g"%sess.run(accuracy, feed_dict={
         x_image: data_set.test.images, y_: data_set.test.labels, keep_prob: 1.0})
-    save_path = saver.save(sess, DATA_DIR + "model_" + str(i) + ".ckpt")
+    save_path = saver.save(sess, args.data_dir + "model_" + str(i) + ".ckpt")
     print("Model saved in file: ", save_path)
 
   if i%100 == 0:
@@ -81,9 +109,9 @@ for i in range(NUM_STEPS):
         x_image:batch[0], y_: batch[1], keep_prob: 1.0})
     print "step %d, training accuracy %g"%(i, train_accuracy)
 
-  sess.run(train_step, feed_dict={x_image: batch[0], y_: batch[1], keep_prob: 0.5})
+  sess.run(train_step, feed_dict={x_image: batch[0], y_: batch[1], keep_prob: args.dropout})
 
 print "test accuracy %g"%sess.run(accuracy, feed_dict={
     x_image: data_set.test.images, y_: data_set.test.labels, keep_prob: 1.0})
-save_path = saver.save(sess, DATA_DIR + "model.ckpt")
+save_path = saver.save(sess, args.data_dir + "model.ckpt")
 print("Model saved in file: ", save_path)

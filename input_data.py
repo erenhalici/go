@@ -91,6 +91,7 @@ class DataSet(object):
     if self._index_in_epoch > self._num_examples:
       # Finished epoch
       self._epochs_completed += 1
+      print("epoch {} completed".format(self._epochs_completed))
       # Shuffle the data
       perm = numpy.arange(self._num_examples)
       numpy.random.shuffle(perm)
