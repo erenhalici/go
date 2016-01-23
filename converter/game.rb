@@ -1,11 +1,5 @@
 
-# FREE = ' '
-# BLACK = 'B'
-# WHITE = 'W'
-FREE = ' '
-BLACK = '•'
-WHITE = 'o'
-KO = 'X'
+require './board'
 
 class Game
   attr_reader :input, :moves, :size, :date, :winner, :win_by_time, :komi,
@@ -102,20 +96,6 @@ class Game
         current_player = (current_player == 'B') ? 'W' : 'B'
       end
     end
-  end
-
-  def new_board
-    board = []
-
-    19.times do
-      row = []
-      19.times do
-        row << FREE
-      end
-      board << row
-    end
-
-    return board
   end
 
   def remove(board, row, col, type)
@@ -241,7 +221,7 @@ class Game
   end
 
   def board_for_move(move)
-    board = new_board
+    board = Board.new_board
     @captured = 0
 
     move.times do |index|
@@ -251,22 +231,8 @@ class Game
     return board
   end
 
-  def invert_board(board)
-    board.map do |row|
-      row.map do |type|
-        if type == BLACK
-          WHITE
-        elsif type == WHITE
-          BLACK
-        else
-          type
-        end
-      end
-    end
-  end
-
   def enumerate_board_states
-    board = new_board
+    board = Board.new_board
     @captured = 0
 
     results = []

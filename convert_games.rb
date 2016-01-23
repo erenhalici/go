@@ -6,11 +6,9 @@ require './converter/game.rb'
 puts
 
 GAMESDIR = '/Users/erenhalici/Academic/tensorflow/usr/go/games'
-OUTPUTDIR = '/Users/erenhalici/Academic/tensorflow/usr/go/data/moves_single'
+OUTPUTDIR = '/Users/erenhalici/Academic/tensorflow/usr/go/data/moves_v3'
 
-def convert_board(board, lost_pieces, komi, player)
-  count = 0
-
+def convert_board(board, lost_pieces, komi)
   if (lost_pieces < 0)
     lost_count_b = 0
     lost_count_w = -lost_pieces
@@ -21,38 +19,26 @@ def convert_board(board, lost_pieces, komi, player)
 
   komi = komi*2
 
+  if (komi < 0)
+    komi_b = 0
+    komi_w = -komi
+  else
+    komi_b = komi
+    komi_w = 0
+  end
+
   flat = []
 
   board.each do |row|
     row.each do |e|
-      if count < lost_count_b
-        lost_b = 1
-      else
-        lost_b = 0
-      end
-
-      if count < lost_count_w
-        lost_w = 1
-      else
-        lost_w = 0
-      end
-
-      if count < komi
-        k = 1
-      else
-        k = 0
-      end
-
-      count += 1
-
       if e == BLACK
-        flat.push(*[1, 0, 0, 0, lost_b, lost_w, k, player])
+        flat.push(*[1, 0, 0, 0, lost_count_b, lost_count_w, komi_b, komi_w])
       elsif e == WHITE
-        flat.push(*[0, 1, 0, 0, lost_b, lost_w, k, player])
+        flat.push(*[0, 1, 0, 0, lost_count_b, lost_count_w, komi_b, komi_w])
       elsif e == KO
-        flat.push(*[0, 0, 1, 0, lost_b, lost_w, k, player])
+        flat.push(*[0, 0, 1, 0, lost_count_b, lost_count_w, komi_b, komi_w])
       else
-        flat.push(*[0, 0, 0, 1, lost_b, lost_w, k, player])
+        flat.push(*[0, 0, 0, 1, lost_count_b, lost_count_w, komi_b, komi_w])
       end
     end
   end
@@ -176,7 +162,12 @@ File.open(OUTPUTDIR + '/games.dat', 'w') do |f|
       #   f.write(convert_board(board, result[:captured], result[:komi], result[:player]).pack('C*'))
       #   total_moves += 1
       # end
-      f.write(convert_board(result[:board], result[:captured], result[:komi], result[:player]).pack('C*'))
+      if result[:player] == 0
+        f.write(convert_board(result[:board], result[:captured], result[:komi]).pack('C*'))
+      else
+        f.write(convert_board(Board.invert_board(result[:board]), -result[:captured], -result[:komi]).pack('C*'))
+      end
+
       total_moves += 1
       index += 1
     end
