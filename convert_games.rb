@@ -5,8 +5,8 @@ require './converter/game.rb'
 
 puts
 
-GAMESDIR = '/Users/erenhalici/Academic/tensorflow/usr/go/games'
-OUTPUTDIR = '/Users/erenhalici/Academic/tensorflow/usr/go/data/moves_v3'
+GAMESDIR = './games'
+OUTPUTDIR = './data/moves_v3'
 
 def convert_board(board, lost_pieces, komi)
   if (lost_pieces < 0)
