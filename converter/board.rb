@@ -3,7 +3,7 @@
 # BLACK = 'B'
 # WHITE = 'W'
 FREE = ' '
-BLACK = '•'
+BLACK = '.'
 WHITE = 'o'
 KO = 'X'
 

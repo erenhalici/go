@@ -1,5 +1,5 @@
 
-require './board'
+require './converter/board'
 
 class Game
   attr_reader :input, :moves, :size, :date, :winner, :win_by_time, :komi,
