@@ -116,7 +116,10 @@ def read_data_sets(train_dir, num_input_layers):
   TEST_SIZE = 5000
 
   images = extract_images(os.path.join(train_dir, GAMES), num_input_layers)
+  images = numpy.concatenate((images,images[:,::-1,::-1,:]))
+
   labels = extract_labels(os.path.join(train_dir, RESULTS))
+  labels = numpy.vstack((labels, labels[:,::-1]))
 
   # validation_images = images[:VALIDATION_SIZE]
   # validation_labels = labels[:VALIDATION_SIZE]
