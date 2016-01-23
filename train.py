@@ -31,6 +31,11 @@ def conv2d(x, W):
 
 data_set = input_data.read_data_sets(args.data_dir, args.num_input_layers)
 
+print("Training Image Shape: {}".format(data_set.train.images.shape))
+print("Training Label Shape: {}".format(data_set.train.labels.shape))
+print("Test Image Shape: {}".format(data_set.test.images.shape))
+print("Test Label Shape: {}".format(data_set.test.labels.shape))
+
 b = tf.Variable(tf.zeros([361]))
 y_ = tf.placeholder(tf.float32, [None, 361])
 
