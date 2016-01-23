@@ -51,7 +51,7 @@ def filter(game)
     return false
   end
 
-  if game.date && Time.new(game.date).year < 1970
+  if game.date && Time.new(game.date).year < 1900
     return false
   end
 
@@ -71,7 +71,7 @@ def filter(game)
   #   return false
   # end
 
-  if game.white_rank && game.white_rank > 7 && game.black_rank && game.black_rank > 7
+  if game.white_rank && game.white_rank > 8 && game.black_rank && game.black_rank > 8
     return true
   end
 
