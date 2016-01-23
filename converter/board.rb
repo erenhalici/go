@@ -1,9 +1,10 @@
+# encoding: UTF-8
 
 # FREE = ' '
 # BLACK = 'B'
 # WHITE = 'W'
 FREE = ' '
-BLACK = '.'
+BLACK = '•'
 WHITE = 'o'
 KO = 'X'
 
