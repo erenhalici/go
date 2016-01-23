@@ -136,6 +136,7 @@ enumerate_games do |game|
       #   moves << convert_move(m)
       # end
       moves << convert_move(move)
+      moves << convert_move([move[1], move[0]])
     end
   end
 end
@@ -156,7 +157,6 @@ File.open(OUTPUTDIR + '/games.dat', 'w') do |f|
   f.write([moves_count].pack('N'))
 
   enumerate_games do |game|
-    index = 0
     game.enumerate_board_states do |result|
       # board_combinations(result[:board]) do |board|
       #   f.write(convert_board(board, result[:captured], result[:komi], result[:player]).pack('C*'))
@@ -164,12 +164,13 @@ File.open(OUTPUTDIR + '/games.dat', 'w') do |f|
       # end
       if result[:player] == 0
         f.write(convert_board(result[:board], result[:captured], result[:komi]).pack('C*'))
+        f.write(convert_board(result[:board].transpose, result[:captured], result[:komi]).pack('C*'))
       else
         f.write(convert_board(Board.invert_board(result[:board]), -result[:captured], -result[:komi]).pack('C*'))
+        f.write(convert_board(Board.invert_board(result[:board].transpose), -result[:captured], -result[:komi]).pack('C*'))
       end
 
-      total_moves += 1
-      index += 1
+      total_moves += 2
     end
   end
 end
