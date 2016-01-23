@@ -112,14 +112,12 @@ def read_data_sets(train_dir, num_input_layers):
 
   GAMES = 'games.dat.gz'
   RESULTS = 'labels.dat.gz'
-  VALIDATION_SIZE = 5000
-  TEST_SIZE = 5000
+  VALIDATION_SIZE = 20000
+  TEST_SIZE = 20000
 
   images = extract_images(os.path.join(train_dir, GAMES), num_input_layers)
-  images = numpy.concatenate((images,images[:,::-1,::-1,:]))
-
   labels = extract_labels(os.path.join(train_dir, RESULTS))
-  labels = numpy.vstack((labels, labels[:,::-1]))
+
 
   # validation_images = images[:VALIDATION_SIZE]
   # validation_labels = labels[:VALIDATION_SIZE]
@@ -128,8 +126,15 @@ def read_data_sets(train_dir, num_input_layers):
 
   test_images = images[-TEST_SIZE:]
   test_labels = labels[-TEST_SIZE:]
+
   train_images = images[:-TEST_SIZE]
   train_labels = labels[:-TEST_SIZE]
+
+  test_images = numpy.concatenate((test_images,test_images[:,::-1,::-1,:]))
+  test_labels = numpy.vstack((test_labels, test_labels[:,::-1]))
+
+  train_images = numpy.concatenate((train_images,train_images[:,::-1,::-1,:]))
+  train_labels = numpy.vstack((train_labels, train_labels[:,::-1]))
 
   data_sets.train = DataSet(train_images, train_labels)
   # data_sets.validation = DataSet(validation_images, validation_labels)
