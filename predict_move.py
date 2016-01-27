@@ -63,10 +63,17 @@ next_move = tf.argmax(filtered, 1)
 
 saver = tf.train.Saver()
 
-sess = tf.Session()
-sess.run(tf.initialize_all_variables())
-saver.restore(sess, "model.ckpt")
+sess1 = tf.Session()
+sess1.run(tf.initialize_all_variables())
+saver.restore(sess1, "model_593000_0219.ckpt")
 
-def predict_move(board, legal_moves):
-  move = sess.run(next_move, feed_dict={x_image: [board], legal: [legal_moves]})
+sess2 = tf.Session()
+sess2.run(tf.initialize_all_variables())
+saver.restore(sess2, "model_93000_00874.ckpt")
+
+def predict_move(board, legal_moves, first_model):
+  if first_model:
+    move = sess2.run(next_move, feed_dict={x_image: [board], legal: [legal_moves]})
+  else:
+    move = sess1.run(next_move, feed_dict={x_image: [board], legal: [legal_moves]})
   return (int(move[0]/19), move[0]%19)

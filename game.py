@@ -16,6 +16,8 @@ class Game:
     self._komi = 6.5
     self._lost_pieces = 0
 
+    self._last_ko = None
+
     for row in range(19):
       for col in range(19):
         self._board[row][col] = FREE
@@ -36,6 +38,16 @@ class Game:
   def current_player(self):
       return self._current_player
 
+  def adjacencies(self, row, col):
+    adj = set()
+
+    if row > 0:  adj.add((row-1, col))
+    if row < 18: adj.add((row+1, col))
+    if col > 0:  adj.add((row, col-1))
+    if col < 18: adj.add((row, col+1))
+
+    return adj
+
   def num_liberties(self, row, col):
     my_type = self._board[row][col]
 
@@ -52,10 +64,9 @@ class Game:
       if self._board[r][c] == FREE or self._board[r][c] == KO:
         liberties += 1
       elif self._board[r][c] == my_type:
-        if r > 0  and (r-1, c) not in visited: queue.add((r-1, c))
-        if r < 18 and (r+1, c) not in visited: queue.add((r+1, c))
-        if c > 0  and (r, c-1) not in visited: queue.add((r, c-1))
-        if c < 18 and (r, c+1) not in visited: queue.add((r, c+1))
+        for adj in self.adjacencies(r, c):
+          if adj not in visited:
+            queue.add(adj)
 
     return liberties
 
@@ -75,19 +86,25 @@ class Game:
       visited.add((r, c))
       if self._board[r][c] == my_type:
         self._board[r][c] = FREE
+        captured += 1
 
-        if r > 0  and (r-1, c) not in visited: queue.add((r-1, c))
-        if r < 18 and (r+1, c) not in visited: queue.add((r+1, c))
-        if c > 0  and (r, c-1) not in visited: queue.add((r, c-1))
-        if c < 18 and (r, c+1) not in visited: queue.add((r, c+1))
+        for adj in self.adjacencies(r, c):
+          if adj not in visited:
+            queue.add(adj)
+
+    return captured
 
   def remove_captured(self, row, col):
     opponent_type = BLACK if self._current_player else WHITE
 
-    if row > 0  and self._board[row-1][col] == opponent_type and self.num_liberties(row-1, col) == 1: self.remove_group(row-1, col)
-    if row < 18 and self._board[row+1][col] == opponent_type and self.num_liberties(row+1, col) == 1: self.remove_group(row+1, col)
-    if col > 0  and self._board[row][col-1] == opponent_type and self.num_liberties(row, col-1) == 1: self.remove_group(row, col-1)
-    if col < 18 and self._board[row][col+1] == opponent_type and self.num_liberties(row, col+1) == 1: self.remove_group(row, col+1)
+    captured = 0
+
+    for adj in self.adjacencies(row, col):
+      (r, c) = adj
+      if self.board[r][c] == opponent_type and self.num_liberties(r, c) == 1:
+        captured += self.remove_group(r, c)
+
+    return captured
 
   def is_legal(self, row, col):
     if not 0 <= row < 19 or not 0 <= col < 19:
@@ -98,10 +115,10 @@ class Game:
 
     opponent_type = BLACK if self._current_player else WHITE
 
-    if row > 0  and self._board[row-1][col] == opponent_type and self.num_liberties(row-1, col) == 1: return True
-    if row < 18 and self._board[row+1][col] == opponent_type and self.num_liberties(row+1, col) == 1: return True
-    if col > 0  and self._board[row][col-1] == opponent_type and self.num_liberties(row, col-1) == 1: return True
-    if col < 18 and self._board[row][col+1] == opponent_type and self.num_liberties(row, col+1) == 1: return True
+    for adj in self.adjacencies(row, col):
+      (r, c) = adj
+      if self.board[r][c] == opponent_type and self.num_liberties(r, c) == 1:
+        return True
 
     self._board[row][col] = WHITE if (self._current_player) else BLACK
     lib = self.num_liberties(row, col)
@@ -109,12 +126,60 @@ class Game:
 
     return lib != 0
 
+  def skip_move(self):
+    self._current_player = not self._current_player
+
   def make_move(self, row, col):
     if not self.is_legal(row, col): return False
 
-    self.remove_captured(row, col)
-    self._board[row][col] = WHITE if (self._current_player) else BLACK
+    board = self._board
 
-    self._current_player = not self._current_player
+
+    if self._last_ko != None:
+      board[self._last_ko[0]][self._last_ko[1]] = FREE
+      self._last_ko = None
+
+    captured = self.remove_captured(row, col)
+
+    if (self._current_player):
+      self._lost_pieces -= captured
+      board[row][col] = WHITE
+    else:
+      self._lost_pieces += captured
+      board[row][col] = BLACK
+
+    if captured == 1 and self.num_liberties(row, col) == 1:
+      for adj in self.adjacencies(row, col):
+        (r, c) = adj
+        if board[r, c] == FREE:
+          board[r][c] = KO
+          self._last_ko = (r, c)
+
+    self.skip_move()
 
     return True
+
+
+
+  def evaluate(self):
+    score = self._lost_pieces - self._komi
+
+    board = self._board
+
+    for row in range(19):
+      for col in range(19):
+        if board[row][col] == FREE:
+          blacks = 0
+          whites = 0
+          for adj in self.adjacencies(row, col):
+            tile = board[adj[0], adj[1]]
+            if tile == BLACK:
+              blacks += 1
+            elif tile == WHITE:
+              whites += 1
+          if blacks == 4:
+            score += 1
+          elif whites == 4:
+            score -= 1
+
+    return score

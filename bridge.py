@@ -10,18 +10,28 @@ class Bridge:
   def make_move(cls, game):
     board = cls.convert_board(game)
     legal = cls.legal_moves(game)
-    return predict_move(board, legal)
+
+    if legal == None:
+      return None
+    else:
+      return predict_move(board, legal, game.current_player)
 
   @classmethod
   def legal_moves(cls, game):
     legal_moves = zeros((19,19), dtype=np.uint8)
 
+    found_legal = False
+
     for row in range(19):
       for col in range(19):
         if game.is_legal(row, col):
           legal_moves[row][col] = 1
+          found_legal = True
 
-    return legal_moves
+    if found_legal:
+      return legal_moves
+    else:
+      return None
 
 
   @classmethod
@@ -43,7 +53,7 @@ class Bridge:
       lost_count_b = lost_pieces
       lost_count_w = 0
 
-    komi = komi*2
+    komi = komi * 2
 
     for row in range(19):
       for col in range(19):
