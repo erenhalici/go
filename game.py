@@ -48,6 +48,29 @@ class Game:
 
     return adj
 
+  def group_size(self, row, col):
+    my_type = self._board[row][col]
+    if my_type == FREE or my_type == KO:
+      return 0
+
+    visited = set()
+    queue = set()
+    queue.add((row, col))
+
+    count = 0
+
+    while queue:
+      (r, c) = queue.pop()
+      visited.add((r, c))
+
+      if self._board[r][c] == my_type:
+        count += 1
+        for adj in self.adjacencies(r, c):
+          if adj not in visited:
+            queue.add(adj)
+
+    return count
+
   def num_liberties(self, row, col):
     my_type = self._board[row][col]
 
@@ -130,10 +153,10 @@ class Game:
     self._current_player = not self._current_player
 
   def make_move(self, row, col):
-    if not self.is_legal(row, col): return False
+    if not self.is_legal(row, col):
+      return False
 
     board = self._board
-
 
     if self._last_ko != None:
       board[self._last_ko[0]][self._last_ko[1]] = FREE
@@ -148,7 +171,7 @@ class Game:
       self._lost_pieces += captured
       board[row][col] = BLACK
 
-    if captured == 1 and self.num_liberties(row, col) == 1:
+    if captured == 1 and self.num_liberties(row, col) == 1 and self.group_size(row, col) == 1:
       for adj in self.adjacencies(row, col):
         (r, c) = adj
         if board[r, c] == FREE:
