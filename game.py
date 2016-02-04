@@ -11,7 +11,7 @@ KO    = 'x'
 class Game:
   def __init__(self):
     self._current_player = False
-    self._board = zeros((19, 19), dtype=unicode)
+    self._board = zeros((19, 19), dtype=str)
 
     self._komi = 6.5
     self._lost_pieces = 0
@@ -33,6 +33,10 @@ class Game:
   @property
   def board(self):
       return self._board
+
+  @board.setter
+  def board(self, board):
+    self._board = board
 
   @property
   def current_player(self):
