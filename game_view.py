@@ -20,6 +20,14 @@ class GameView(object):
     self._outline = pygame.Rect(45, 45, 720, 720)
     self.draw()
 
+  @property
+  def game(self):
+    return self._game
+
+  @game.setter
+  def game(self, game):
+    self._game = game
+
   def draw(self):
     rect = pygame.Rect(0, 0, BOARD_SIZE[0], BOARD_SIZE[1])
     pygame.draw.rect(self._screen, BACKGROUND, rect, 0)

@@ -72,42 +72,38 @@ sess1 = tf.Session()
 sess1.run(tf.initialize_all_variables())
 # saver.restore(sess1, "model_93000_00874.ckpt")
 # saver.restore(sess1, "model_159000_01715.ckpt")
-saver.restore(sess1, "model_446000_02135.ckpt")
+# saver.restore(sess1, "model_446000_02135.ckpt")
 # saver.restore(sess1, "model_593000_0219.ckpt")
+saver.restore(sess1, "data/models/model.ckpt")
 
 sess2 = tf.Session()
 sess2.run(tf.initialize_all_variables())
 # saver.restore(sess2, "model_93000_00874.ckpt")
 # saver.restore(sess2, "model_159000_01715.ckpt")
 # saver.restore(sess2, "model_446000_02135.ckpt")
-saver.restore(sess2, "model_593000_0219.ckpt")
+# saver.restore(sess2, "model_593000_0219.ckpt")
+saver.restore(sess2, "data/models/model.ckpt")
 
 def predict_move(board, legal_moves, second_model):
-  # if second_model:
-  #   predictions = sess1.run(next_moves, feed_dict={x_image: [board], legal: [legal_moves]})
-  # else:
-  #   predictions = sess2.run(next_moves, feed_dict={x_image: [board], legal: [legal_moves]})
-
-  # # print predictions
-
-  # probs = predictions[0][0].tolist()
-  # moves = predictions[1][0].tolist()
-
-  # prob = np.random.rand()
-  # prob = prob * sum(probs)
-
-  # # print prob
-
-  # cumulative = 0
-
-  # while cumulative < prob:
-  #   move = moves.pop(0)
-  #   cumulative += probs.pop(0)
-
-  # return (int(move/19), move%19)
-
   if second_model:
-    move = sess2.run(next_move, feed_dict={x_image: [board], legal: [legal_moves]})
+    predictions = sess1.run(next_moves, feed_dict={x_image: [board], legal: [legal_moves]})
   else:
-    move = sess1.run(next_move, feed_dict={x_image: [board], legal: [legal_moves]})
-  return (int(move[0]/19), move[0]%19)
+    predictions = sess2.run(next_moves, feed_dict={x_image: [board], legal: [legal_moves]})
+
+  # print predictions
+
+  probs = predictions[0][0].tolist()
+  moves = predictions[1][0].tolist()
+
+  prob = np.random.rand()
+  prob = prob * sum(probs)
+
+  cumulative = 0
+
+  print(probs[0])
+
+  while cumulative < prob:
+    move = moves.pop(0)
+    cumulative += probs.pop(0)
+
+  return (int(move/19), move%19)

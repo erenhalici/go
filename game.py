@@ -153,6 +153,10 @@ class Game:
     self._current_player = not self._current_player
 
   def make_move(self, row, col):
+    if (row, col) == (-1, -1):
+      self.skip_move()
+      return True
+
     if not self.is_legal(row, col):
       return False
 
@@ -181,7 +185,6 @@ class Game:
     self.skip_move()
 
     return True
-
 
 
   def evaluate(self):
