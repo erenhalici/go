@@ -1,4 +1,6 @@
 
+from board_converter import *
+
 from game_view import *
 from game import *
 from bridge import *
@@ -49,14 +51,15 @@ class GameController(object):
       self._game_view.draw()
 
     while True:
-      pygame.time.wait(30)
+      pygame.time.wait(250)
       for event in pygame.event.get():
         if event.type == pygame.QUIT:
           return
         else:
           self._game_view.event(event)
 
-
+      # game.board = invert_board(game.board)
+      # self._game_view.draw()
 
   def make_move(self, x, y):
     if self._game.make_move(x, y):
