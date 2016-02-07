@@ -38,6 +38,19 @@ class GameController(object):
           return
         else:
           self._game_view.event(event)
+          if event.type == pygame.MOUSEBUTTONDOWN:
+            board = convert_board(self._game)
+            print board.size
+            print board.shape
+            print board.transpose((2,0,1))[13]
+            packed = np.packbits(board)
+            print packed
+            print packed.size
+            print packed.shape
+            new_board = np.unpackbits(packed)[:12996].reshape((19,19,36))
+            print new_board.size
+            print new_board.shape
+            print new_board.transpose((2,0,1))[13]
 
   def show_game(self, sgf_game):
     for game in sgf_game.all_positions():
@@ -58,8 +71,8 @@ class GameController(object):
         else:
           self._game_view.event(event)
 
-      # game.board = invert_board(game.board)
-      # self._game_view.draw()
+      game.invert_sides()
+      self._game_view.draw()
 
   def make_move(self, x, y):
     if self._game.make_move(x, y):

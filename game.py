@@ -97,10 +97,47 @@ class Game:
 
     return liberties
 
+
+  def get_group(self, row, col):
+    group = set()
+    queue = set()
+
+    my_type = self._board[row][col]
+    if my_type == BLACK or my_type == WHITE:
+      queue.add((row, col))
+
+    while queue:
+      (r, c) = queue.pop()
+      if self._board[r][c] == my_type:
+        group.add((r, c))
+
+        for adj in self.adjacencies(r, c):
+          if adj not in group:
+            queue.add(adj)
+
+    return group
+
+  def num_captures(self, row, col):
+    if self._board[row][col] != FREE:
+      return 0
+
+    opponent_type = BLACK if self._current_player else WHITE
+    captures = 0
+
+    captured = set()
+
+    for adj in self.adjacencies(row, col):
+      (r, c) = adj
+      if self.board[r][c] == opponent_type and self.num_liberties(r, c) == 1:
+        captured |= self.get_group(r, c)
+
+    return len(captured)
+
+
   def remove_group(self, row, col):
     my_type = self._board[row][col]
     if my_type == FREE or my_type == KO:
-      return
+      return 0
 
     captured = 0
 
@@ -213,3 +250,19 @@ class Game:
             score -= 1
 
     return score
+
+  def invert_sides(self):
+    for row in range(19):
+      for col in range(19):
+        e = self._board[row][col]
+        if e == BLACK:
+          self._board[row][col] = WHITE
+        elif e == WHITE:
+          self._board[row][col] = BLACK
+        else:
+          self._board[row][col] = e
+
+    self._komi        = -self._komi
+    self._lost_pieces  = -self._lost_pieces
+
+    self._current_player = not self._current_player
