@@ -23,6 +23,9 @@ class SGFGame():
       return self._moves
 
 
+  def moves_hash(self):
+    return hash(str(self._moves))
+
   def extract_metadata(self, info, filename):
     metadata = {}
 
@@ -70,7 +73,10 @@ class SGFGame():
       elif k == 'CA':
         metadata['encoding'] = v
       elif k == 'DT':
-        metadata['date'] = parser.parse(v.split(',')[0])
+        try:
+          metadata['date'] = parser.parse(v.split(',')[0])
+        except Exception, e:
+          pass
       elif k == 'HA':
         metadata['handicap'] = int(v)
       elif k == 'AB' or k == 'AW':
