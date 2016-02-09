@@ -1,17 +1,20 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from numpy import zeros
+import numpy as np
 
-FREE  = ' '
-BLACK = '.'
-WHITE = 'o'
-KO    = 'x'
+FREE  = 0
+BLACK = 1
+WHITE = 2
+KO    = 3
 
-class Game:
+class Game(object):
   def __init__(self):
     self._current_player = False
-    self._board = zeros((19, 19), dtype=str)
+    self._board = np.zeros((19, 19), dtype=int)
+
+    self._liberties = np.zeros((19, 19), dtype=int)
+    self.update_all_liberties()
 
     self._komi = 6.5
     self._lost_pieces = 0
@@ -24,23 +27,31 @@ class Game:
 
   @property
   def komi(self):
-      return self._komi
+    return self._komi
+
+  @komi.setter
+  def komi(self, komi):
+    self._komi = komi
 
   @property
   def lost_pieces(self):
-      return self._lost_pieces
+    return self._lost_pieces
 
   @property
   def board(self):
-      return self._board
+    return self._board
 
   @board.setter
   def board(self, board):
     self._board = board
 
   @property
+  def liberties(self):
+    return self._liberties
+
+  @property
   def current_player(self):
-      return self._current_player
+    return self._current_player
 
   def adjacencies(self, row, col):
     adj = set()
@@ -51,6 +62,26 @@ class Game:
     if col < 18: adj.add((row, col+1))
 
     return adj
+
+
+  def get_group(self, row, col):
+    group = set()
+    queue = set()
+
+    my_type = self._board[row][col]
+    if my_type == BLACK or my_type == WHITE:
+      queue.add((row, col))
+
+    while queue:
+      (r, c) = queue.pop()
+      if self._board[r][c] == my_type:
+        group.add((r, c))
+
+        for adj in self.adjacencies(r, c):
+          if adj not in group:
+            queue.add(adj)
+
+    return group
 
   def group_size(self, row, col):
     my_type = self._board[row][col]
@@ -75,6 +106,33 @@ class Game:
 
     return count
 
+  def update_all_liberties(self):
+    for row in range(19):
+      for col in range(19):
+        self._liberties[row][col] = self.num_liberties(row, col)
+
+  def update_liberties(self, row, col):
+    my_type = self._board[row][col]
+
+    if my_type == BLACK:
+      opponent_type = WHITE
+    elif my_type == WHITE:
+      opponent_type = BLACK
+    else:
+      return
+
+    l = self.num_liberties(row, col)
+    for (r, c) in self.get_group(row, col):
+      self._liberties[r][c] = l
+
+    opponent_group = set()
+
+    for (r, c) in self.adjacencies(row, col):
+      if self._board[r][c] == opponent_type:
+        opponent_group |= self.get_group(r, c)
+    for (r, c) in opponent_group:
+      self._liberties[r][c] -= 1
+
   def num_liberties(self, row, col):
     my_type = self._board[row][col]
 
@@ -97,26 +155,6 @@ class Game:
 
     return liberties
 
-
-  def get_group(self, row, col):
-    group = set()
-    queue = set()
-
-    my_type = self._board[row][col]
-    if my_type == BLACK or my_type == WHITE:
-      queue.add((row, col))
-
-    while queue:
-      (r, c) = queue.pop()
-      if self._board[r][c] == my_type:
-        group.add((r, c))
-
-        for adj in self.adjacencies(r, c):
-          if adj not in group:
-            queue.add(adj)
-
-    return group
-
   def num_captures(self, row, col):
     if self._board[row][col] != FREE:
       return 0
@@ -128,7 +166,7 @@ class Game:
 
     for adj in self.adjacencies(row, col):
       (r, c) = adj
-      if self.board[r][c] == opponent_type and self.num_liberties(r, c) == 1:
+      if self.board[r][c] == opponent_type and self.liberties[r][c] == 1:
         captured |= self.get_group(r, c)
 
     return len(captured)
@@ -179,16 +217,18 @@ class Game:
 
     opponent_type = BLACK if self._current_player else WHITE
 
-    for adj in self.adjacencies(row, col):
-      (r, c) = adj
-      if self.board[r][c] == opponent_type and self.num_liberties(r, c) == 1:
+    for (r, c) in self.adjacencies(row, col):
+      e = self.board[r][c]
+      if e == FREE or e == KO:
         return True
+      elif e == opponent_type:
+        if self.liberties[r][c] == 1:
+          return True
+      else:  # e == my_type
+        if self.liberties[r][c] != 1:
+          return True
 
-    self._board[row][col] = WHITE if (self._current_player) else BLACK
-    lib = self.num_liberties(row, col)
-    self._board[row][col] = FREE
-
-    return lib != 0
+    return False
 
   def skip_move(self):
     self._current_player = not self._current_player
@@ -215,6 +255,11 @@ class Game:
     else:
       self._lost_pieces += captured
       board[row][col] = BLACK
+
+    if captured == 0:
+      self.update_liberties(row, col)
+    else:
+      self.update_all_liberties()
 
     if captured == 1 and self.num_liberties(row, col) == 1 and self.group_size(row, col) == 1:
       for adj in self.adjacencies(row, col):

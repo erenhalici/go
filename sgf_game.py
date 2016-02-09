@@ -160,10 +160,8 @@ class SGFGame():
     else:
       game.komi = 0
 
-    for move in self._moves:
+    for move in self.moves:
+      yield game, move
       row, col = move
-      if game.make_move(row, col):
-        yield game
-      else:
+      if not game.make_move(row, col):
         raise Exception("WRONG MOVE!!!!!!!")
-

@@ -40,28 +40,32 @@ class GameController(object):
           self._game_view.event(event)
           if event.type == pygame.MOUSEBUTTONDOWN:
             board = convert_board(self._game)
+            layer = 31
             print board.size
             print board.shape
-            print board.transpose((2,0,1))[13]
+            print board.transpose((2,0,1))[layer]
             packed = np.packbits(board)
             print packed
             print packed.size
             print packed.shape
-            new_board = np.unpackbits(packed)[:12996].reshape((19,19,36))
+            new_board = np.unpackbits(packed)[:(19*19*32)].reshape((19,19,32))
             print new_board.size
             print new_board.shape
-            print new_board.transpose((2,0,1))[13]
+            print new_board.transpose((2,0,1))[layer]
 
   def show_game(self, sgf_game):
-    for game in sgf_game.all_positions():
-      pygame.time.wait(25)
-
+    for (game, move) in sgf_game.all_positions():
       for event in pygame.event.get():
         if event.type == pygame.QUIT:
           return
 
       self._game_view.game = game
       self._game_view.draw()
+
+      board = convert_board(game)
+      print board.transpose((2,0,1))[0]
+
+      pygame.time.wait(5000)
 
     while True:
       pygame.time.wait(250)
