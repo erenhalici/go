@@ -1,3 +1,6 @@
+
+import multiprocessing as mp
+
 import time
 import math
 import h5py
@@ -62,6 +65,21 @@ labels    = data_file.create_dataset("labels", (data_count, label_data_size), ma
 
 start_time = time.time()
 
+def convert_position(position):
+  (game, (row, col)) = position
+
+  label = np.zeros(362, dtype=int)
+  if row == -1 or col == -1:
+    label[361] = 1
+  else:
+    label[row * 19 + col] = 1
+
+  return (np.packbits(convert_board(game)), np.packbits(label))
+
+core_count = mp.cpu_count()
+print "Working on %d cores"%core_count
+pool = mp.Pool(core_count)
+
 for root, dirnames, filenames in os.walk('./data/games/'):
   for filename in fnmatch.filter(filenames, '*.sgf'):
     if pos_count < 10000:
@@ -76,10 +94,9 @@ for root, dirnames, filenames in os.walk('./data/games/'):
             games_set.add(moves_hash)
             # game_controller.show_game(sgf_game)
 
-            for (game, (row, col)) in sgf_game.all_positions():
-              board = np.packbits(convert_board(game))
-              # convert_board(game)
+            converted = pool.map(convert_position, sgf_game.all_positions())
 
+            for (board, label) in converted:
               if pos_count == data_count:
                 print "Increasing data_size: %i"%pos_count
                 data_count += 100000
@@ -88,13 +105,7 @@ for root, dirnames, filenames in os.walk('./data/games/'):
                 print "Done"
 
               positions[pos_count] = board
-
-              label = np.zeros(362, dtype=int)
-              if row == -1 or col == -1:
-                label[361] = 1
-              else:
-                label[row * 19 + col] = 1
-              labels[pos_count] = np.packbits(label)
+              labels[pos_count] = label
 
               pos_count += 1
               if pos_count % 1000 == 0:
@@ -111,6 +122,8 @@ for root, dirnames, filenames in os.walk('./data/games/'):
         pass
 
       total += 1
+
+pool.close()
 
 print str(count) + ' out of ' + str(total) + ' games are eligible'
 print 'A total of ' + str(pos_count) + ' positions'

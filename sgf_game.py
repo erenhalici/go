@@ -1,11 +1,13 @@
 from game import Game
 from dateutil import parser
+import copy
 
 class SGFGame():
   def __init__(self, filename):
-    f = open(filename).read()
+    f = open(filename)
     # f = ''.join(f.split())
-    tokens = f.split(';')
+    tokens = f.read().split(';')
+    f.close()
     tokens.pop(0)
     info = tokens.pop(0)
     self.extract_metadata(info, filename)
@@ -161,7 +163,7 @@ class SGFGame():
       game.komi = 0
 
     for move in self.moves:
-      yield game, move
+      yield copy.deepcopy(game), move
       row, col = move
       if not game.make_move(row, col):
         raise Exception("WRONG MOVE!!!!!!!")
