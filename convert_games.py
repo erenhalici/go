@@ -82,7 +82,7 @@ pool = mp.Pool(core_count)
 
 for root, dirnames, filenames in os.walk('./data/games/'):
   for filename in fnmatch.filter(filenames, '*.sgf'):
-    if pos_count < 10000:
+    if pos_count < 100000:
       file = os.path.join(root, filename)
 
       try:
@@ -111,7 +111,7 @@ for root, dirnames, filenames in os.walk('./data/games/'):
               if pos_count % 1000 == 0:
                 print pos_count
                 print "%f positions per hour"%(pos_count/(time.time() - start_time) * 3600)
-                print "Approximately %f hours to end"%(8404613.0/pos_count*(time.time() - start_time)/3600)
+                print "Approximately %f hours to end"%((8404613.0/pos_count-1)*(time.time() - start_time)/3600)
 
             count += 1
       except Exception, e:
