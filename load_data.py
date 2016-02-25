@@ -1,4 +1,5 @@
 
+# import multiprocessing as mp
 import numpy as np
 import h5py
 
@@ -14,6 +15,7 @@ class DataSet(object):
     self._index_in_epoch = 0
 
     self._indices = np.arange(self._num_positions)
+    # self._pool = mp.Pool(mp.cpu_count())
 
   @property
   def positions(self):
@@ -39,6 +41,14 @@ class DataSet(object):
     return np.unpackbits(position)[:19*19*self._num_layers].reshape(19,19,self._num_layers)
   def convert_label(self, label):
     return np.unpackbits(label)[:self._num_classes]
+  def all_positions(self):
+    return [self.convert_position(position) for position in self._positions]
+  def all_labels(self):
+    return [self.convert_label(label) for label in self._labels]
+  def get_position_at_index(self, index):
+    return self.convert_position(self._positions[index])
+  def get_label_at_index(self, index):
+    return self.convert_label(self._labels[index])
   def next_batch(self, batch_size):
     """Return the next `batch_size` examples from this data set."""
     start = self._index_in_epoch
@@ -56,8 +66,13 @@ class DataSet(object):
     end = self._index_in_epoch
 
     indices = self._indices[start:end].tolist()
+    indices.sort()
     positions = [self.convert_position(position) for position in self._positions[indices]]
     labels    = [self.convert_label(label)       for label    in self._labels[indices]]
+    # positions = [self.convert_position(self._positions[index]) for index in indices]
+    # labels    = [self.convert_label(self._labels[index])       for index in indices]
+    # positions = self._pool.map(self.get_position_at_index, indices)
+    # labels    = self._pool.map(self.get_label_at_index,    indices)
 
     return positions, labels
 
@@ -67,7 +82,7 @@ def read_data_sets(data_file):
   data_sets = DataSets()
 
   # VALIDATION_SIZE = 20000
-  TEST_SIZE = 250000
+  TEST_SIZE = 100000
 
   # positions = extract_positions(os.path.join(train_dir, GAMES), num_input_layers)
   # labels = extract_labels(os.path.join(train_dir, RESULTS))
@@ -79,6 +94,9 @@ def read_data_sets(data_file):
   num_positions = positions.attrs['count']
   num_layers = positions.attrs['layers']
   num_classes = labels.attrs['classes']
+
+  positions = positions[:num_positions]
+  labels = labels[:num_positions]
 
 #  positions = numpy.concatenate((positions,positions[::-1,::-1,::-1,:]))
 #  labels = numpy.vstack((labels, labels[::-1,::-1]))
@@ -99,6 +117,7 @@ def read_data_sets(data_file):
   # data_sets.train = DataSet(train_positions, train_labels)
   # data_sets.test = DataSet(test_positions, test_labels)
 
+  data_sets.train = DataSet(train_positions, train_labels, num_positions - TEST_SIZE, num_layers, num_classes)
+  data_sets.test  = DataSet(test_positions,  test_labels, TEST_SIZE, num_layers, num_classes)
 
-  data_sets.train = DataSet(positions, labels, num_positions, num_layers, num_classes)
   return data_sets

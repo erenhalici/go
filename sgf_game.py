@@ -163,7 +163,8 @@ class SGFGame():
       game.komi = 0
 
     for move in self.moves:
-      yield copy.deepcopy(game), move
+      if move != (-1, -1):
+        yield copy.deepcopy(game), move
       row, col = move
       if not game.make_move(row, col):
         raise Exception("WRONG MOVE!!!!!!!")

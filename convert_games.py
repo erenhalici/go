@@ -58,7 +58,7 @@ data_file = h5py.File("data/training/32_layers.hdf5", "w")
 # label_file    = h5py.File("data/training/labels.hdf5", "w")
 
 position_data_size = int(math.ceil(19*19*32/8.0))
-label_data_size = int(math.ceil(362/8.0))
+label_data_size = int(math.ceil(361/8.0))
 data_count = 100000
 positions = data_file.create_dataset("positions", (data_count, position_data_size), maxshape=(None, position_data_size), dtype=np.uint8)
 labels    = data_file.create_dataset("labels", (data_count, label_data_size), maxshape=(None, label_data_size), dtype=np.uint8)
@@ -68,7 +68,7 @@ start_time = time.time()
 def convert_position(position):
   (game, (row, col)) = position
 
-  label = np.zeros(362, dtype=int)
+  label = np.zeros(361, dtype=int)
   if row == -1 or col == -1:
     label[361] = 1
   else:
@@ -82,7 +82,7 @@ pool = mp.Pool(core_count)
 
 for root, dirnames, filenames in os.walk('./data/games/'):
   for filename in fnmatch.filter(filenames, '*.sgf'):
-    if pos_count < 100000:
+    # if pos_count < 100000:
       file = os.path.join(root, filename)
 
       try:
@@ -131,5 +131,5 @@ print 'A total of ' + str(pos_count) + ' positions'
 positions.attrs['count'] = pos_count
 positions.attrs['layers'] = 32
 labels.attrs['count'] = pos_count
-labels.attrs['classes'] = 362
+labels.attrs['classes'] = 361
 data_file.close()
