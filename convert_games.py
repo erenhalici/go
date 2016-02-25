@@ -108,7 +108,7 @@ for root, dirnames, filenames in os.walk('./data/games/'):
               labels[pos_count] = label
 
               pos_count += 1
-              if pos_count % 1000 == 0:
+              if pos_count % 10000 == 0:
                 print pos_count
                 print "%f positions per hour"%(pos_count/(time.time() - start_time) * 3600)
                 print "Approximately %f hours to end"%((8404613.0/pos_count-1)*(time.time() - start_time)/3600)
