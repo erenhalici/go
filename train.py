@@ -8,7 +8,7 @@ parser = argparse.ArgumentParser(description='Train a DCNN to learn how to play 
 parser.add_argument('--output-dir', default='data/models/32_layers/', help='Data directory (default: data/models/32_layers/)', dest='output_dir')
 parser.add_argument('--data-file', default='data/training/32_layers.hdf5', help='Data file (default: data/training/32_layers.hdf5)', dest='data_file')
 parser.add_argument('--num-steps', default=300000, type=int, help='Number of steps of execution (default: 300000)', dest='num_steps')
-parser.add_argument('--batch-size', default=16, type=int, help='Number of steps of execution (default: 16)', dest='batch_size')
+parser.add_argument('--batch-size', default=16, type=int, help='Batch size (default: 16)', dest='batch_size')
 parser.add_argument('--layer-count', default=12, type=int, help='Number of convolutions layers  (default: 12)', dest='layer_count')
 parser.add_argument('--filter-count', default=192, type=int, help='Number of convolutions filters  (default: 192)', dest='filter_count')
 parser.add_argument('--dropout', type=float, help='Dropout (if none is given, no dropout)', dest='dropout')
