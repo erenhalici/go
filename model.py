@@ -4,9 +4,9 @@ import tensorflow as tf
 K = 1
 
 class Model(object):
-  def __init__(self, num_input_layers, layer_count, filter_count):
+  def __init__(self, num_input_layers, layer_count, filter_count, learning_rate):
     b = tf.Variable(tf.zeros([361]))
-    y_ = tf.placeholder(tf.float32, [None, 361])
+    self._y_ = tf.placeholder(tf.float32, [None, 361])
 
     self._x_image = tf.placeholder(tf.float32, [None, 19, 19, num_input_layers])
 
@@ -25,18 +25,18 @@ class Model(object):
     b_conv = self.bias_variable([361])
     softmax_input = tf.reshape(self.conv2d(last_h_conv, W_conv), [-1, 361]) + b_conv
 
-    keep_prob = tf.placeholder("float")
+    self._keep_prob = tf.placeholder("float")
 
     # if dropout:
-    #   softmax_input_drop = tf.nn.dropout(softmax_input, keep_prob)
+    #   softmax_input_drop = tf.nn.dropout(softmax_input, self._keep_prob)
     # else:
     #   softmax_input_drop = softmax_input
 
     y_conv = tf.nn.softmax(softmax_input)
 
-    cross_entropy = -tf.reduce_sum(y_*tf.log(tf.clip_by_value(y_conv,1e-10,1.0)))
-    self._train_step = tf.train.AdamOptimizer(learning_rate=1e-4, beta1=0.9, beta2=0.999, epsilon=1e-4).minimize(cross_entropy)
-    correct_prediction = tf.equal(tf.argmax(y_conv,1), tf.argmax(y_,1))
+    cross_entropy = -tf.reduce_sum(self._y_*tf.log(tf.clip_by_value(y_conv,1e-10,1.0)))
+    self._train_step = tf.train.AdamOptimizer(learning_rate=learning_rate, beta1=0.9, beta2=0.999, epsilon=1e-4).minimize(cross_entropy)
+    correct_prediction = tf.equal(tf.argmax(y_conv,1), tf.argmax(self._y_,1))
     self._accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
 
     self._legal = tf.placeholder(tf.float32, [1, 19, 19])
@@ -48,6 +48,12 @@ class Model(object):
   @property
   def x_image(self):
     return self._x_image
+  @property
+  def y_(self):
+    return self._y_
+  @property
+  def keep_prob(self):
+    return self._keep_prob
   @property
   def legal(self):
     return self._legal
