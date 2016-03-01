@@ -37,6 +37,8 @@ sess.run(tf.initialize_all_variables())
 #   saver.restore(sess, args.output_dir + "model.ckpt")
 #   print("Model restored.")
 
+train_accuracy_sum = 0.0
+
 for i in range(args.num_steps):
   batch = data_set.train.next_batch(args.batch_size)
   if i%args.test_interval == 0:
@@ -46,10 +48,13 @@ for i in range(args.num_steps):
     save_path = saver.save(sess, args.output_dir + "model_" + str(i) + ".ckpt")
     print("Model saved in file: ", save_path)
 
-  if i%500 == 0:
-    train_accuracy = sess.run(model.accuracy,feed_dict={
+  if i%10 == 0:
+    train_accuracy_sum += sess.run(model.accuracy,feed_dict={
       model.x_image:batch[0], model.y_: batch[1], model.keep_prob: 1.0})
-    print "step %d, training accuracy %g"%(i, train_accuracy)
+
+  if i%500 == 0:
+    print "step %d, training accuracy %g"%(i, train_accuracy_sum/50)
+    train_accuracy_sum = 0
 
   sess.run(model.train_step, feed_dict={model.x_image: batch[0], model.y_: batch[1], model.keep_prob: args.dropout})
 
