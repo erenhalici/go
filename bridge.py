@@ -3,18 +3,25 @@ import numpy as np
 from numpy import zeros
 
 from game import *
+import predict_move_old
 from predict_move import *
+
+import board_converter
 
 class Bridge:
   @classmethod
   def make_move(cls, game):
-    board = cls.convert_board(game)
     legal = cls.legal_moves(game)
 
     if legal == None:
       return None
     else:
-      return predict_move(board, legal, game.current_player)
+      if game.current_player == False:
+        # return predict_move_old.predict_move(cls.convert_board(game), legal, game.current_player)
+        return predict_move(board_converter.convert_board(game), legal, game.current_player)
+      elif game.current_player == True:
+        # return predict_move_old.predict_move(cls.convert_board(game), legal, game.current_player)
+        return predict_move(board_converter.convert_board(game), legal, game.current_player)
 
   @classmethod
   def legal_moves(cls, game):
