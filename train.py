@@ -48,7 +48,7 @@ for i in range(args.num_steps):
     print "epoch: %g"%data_set.train.epoch()
     print "test accuracy %g"%sess.run(model.accuracy, feed_dict={
       model.x_image: data_set.test.all_positions(), model.y_: data_set.test.all_labels(), model.keep_prob: 1.0})
-    save_path = saver.save(sess, args.output_dir + "model_" + str(i) + ".ckpt")
+    save_path = saver.save(sess, args.output_dir + "model_" + str(i+args.start_step) + ".ckpt")
     print("Model saved in file: ", save_path)
 
   if i%10 == 0:
@@ -56,7 +56,7 @@ for i in range(args.num_steps):
       model.x_image:batch[0], model.y_: batch[1], model.keep_prob: 1.0})
 
   if i%500 == 0:
-    print "step %d, training accuracy %g"%(i, train_accuracy_sum/50)
+    print "step %d, training accuracy %g"%(i+args.start_step, train_accuracy_sum/50)
     train_accuracy_sum = 0
 
   sess.run(model.train_step, feed_dict={model.x_image: batch[0], model.y_: batch[1], model.keep_prob: args.dropout})
