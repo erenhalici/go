@@ -8,6 +8,8 @@ parser = argparse.ArgumentParser(description='Train a DCNN to learn how to play 
 
 parser.add_argument('--output-dir', default='data/models/32_layers/', help='Data directory (default: data/models/32_layers/)', dest='output_dir')
 parser.add_argument('--data-file', default='data/training/32_layers.hdf5', help='Data file (default: data/training/32_layers.hdf5)', dest='data_file')
+parser.add_argument('--start-file', help='Starting data file', dest='start_file')
+parser.add_argument('--start-step', default=0, type=int, help='Starting step (Default: 0)', dest='start_step')
 parser.add_argument('--num-steps', default=300000, type=int, help='Number of steps of execution (default: 300000)', dest='num_steps')
 parser.add_argument('--learning-rate', default=1e-4, type=float, help='Learning Rate (default: 1e-4)', dest='learning_rate')
 parser.add_argument('--batch-size', default=16, type=int, help='Batch size (default: 16)', dest='batch_size')
@@ -18,7 +20,7 @@ parser.add_argument('--test-interval', default=10000, type=int, help='Test Accur
 
 args = parser.parse_args()
 
-data_set = read_data_sets(args.data_file)
+data_set = read_data_sets(args.data_file, args.start_step)
 
 print("Training Position Shape: {}".format(data_set.train.positions.shape))
 print("Training Label Shape: {}".format(data_set.train.labels.shape))
@@ -33,9 +35,10 @@ saver = tf.train.Saver()
 sess = tf.Session()
 sess.run(tf.initialize_all_variables())
 
-# if os.path.isfile(args.output_dir + "model.ckpt"):
-#   saver.restore(sess, args.output_dir + "model.ckpt")
-#   print("Model restored.")
+if args.start_file:
+  if os.path.isfile(args.start_file):
+    saver.restore(sess, args.start_file)
+    print("Model restored.")
 
 train_accuracy_sum = 0.0
 

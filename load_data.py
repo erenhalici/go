@@ -87,6 +87,16 @@ class DataSet(object):
     return self.augment_position(self.convert_position(self._positions[index/8]), index)
   def get_label_at_index(self, index):
     return self.augment_label(self.convert_label(self._labels[index/8]), index).reshape(361)
+  def set_start_step(self, start_step):
+    self._index_in_epoch = start_step
+    if self._index_in_epoch > self._num_positions:
+      self._epochs_completed = self._index_in_epoch / self._num_positions
+      print("epoch {} completed".format(self._epochs_completed))
+      # Shuffle the data
+      np.random.shuffle(self._indices)
+      # Start next epoch
+      start = 0
+      self._index_in_epoch = 0
   def next_batch(self, batch_size):
     """Return the next `batch_size` examples from this data set."""
     start = self._index_in_epoch
@@ -114,7 +124,7 @@ class DataSet(object):
 
     return positions, labels
 
-def read_data_sets(data_file):
+def read_data_sets(data_file, start_step):
   class DataSets(object):
     pass
   data_sets = DataSets()
@@ -156,6 +166,7 @@ def read_data_sets(data_file):
   # data_sets.test = DataSet(test_positions, test_labels)
 
   data_sets.train = DataSet(train_positions, train_labels, num_positions - TEST_SIZE, num_layers, num_classes)
+  data_sets.train.set_start_step(start_step)
   data_sets.test  = DataSet(test_positions,  test_labels, TEST_SIZE, num_layers, num_classes)
 
   return data_sets
