@@ -16,11 +16,11 @@ parser.add_argument('--batch-size', default=16, type=int, help='Batch size (defa
 parser.add_argument('--layer-count', default=12, type=int, help='Number of convolutions layers  (default: 12)', dest='layer_count')
 parser.add_argument('--filter-count', default=192, type=int, help='Number of convolutions filters  (default: 192)', dest='filter_count')
 parser.add_argument('--dropout', type=float, help='Dropout (if none is given, no dropout)', dest='dropout')
-parser.add_argument('--test-interval', default=10000, type=int, help='Test Accuracy Interval (default: 10000', dest='test_interval')
+parser.add_argument('--test-interval', default=10000, type=int, help='Test Accuracy Interval (default: 10000)', dest='test_interval')
 
 args = parser.parse_args()
 
-data_set = read_data_sets(args.data_file, args.start_step)
+data_set = read_data_sets(args.data_file, args.start_step*args.batch_size)
 
 print("Training Position Shape: {}".format(data_set.train.positions.shape))
 print("Training Label Shape: {}".format(data_set.train.labels.shape))

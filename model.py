@@ -4,7 +4,7 @@ import tensorflow as tf
 K = 1
 
 class Model(object):
-  def __init__(self, num_input_layers, layer_count, filter_count, learning_rate):
+  def __init__(self, num_input_layers, layer_count, filter_count, learning_rate=1e-4):
     b = tf.Variable(tf.zeros([361]))
     self._y_ = tf.placeholder(tf.float32, [None, 361])
 

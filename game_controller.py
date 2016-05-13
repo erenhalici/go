@@ -41,6 +41,12 @@ class GameController(object):
       pygame.time.wait(30)
 
   def run(self):
+    # (new_x, new_y) = Bridge.make_move(self._game)
+    # self._game_view.draw()
+    # # pygame.time.wait(250)
+    # self._game.make_move(new_x, new_y)
+    # self._game_view.draw()
+
     while True:
       pygame.time.wait(30)
       for event in pygame.event.get():

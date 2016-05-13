@@ -8,28 +8,31 @@ from model import *
 min_prob = 1
 
 with tf.Graph().as_default():
-  model = Model(32, 6, 64)
+  model = Model(32, 12, 96)
 
   saver = tf.train.Saver()
   sess1 = tf.Session()
   sess1.run(tf.initialize_all_variables())
-  saver.restore(sess1, "data/models/6_64/model.ckpt")
+  # saver.restore(sess1, "data/models/6_64/model.ckpt")
+  # saver.restore(sess1, "data/models/8_96/model_320000_02894.ckpt")
+  saver.restore(sess1, "data/models/12_96/model_10000000_03642.ckpt")
 
 with tf.Graph().as_default():
-  model = Model(32, 8, 96)
+  model = Model(32, 12, 96)
 
   saver = tf.train.Saver()
   sess2 = tf.Session()
   sess2.run(tf.initialize_all_variables())
-  saver.restore(sess2, "data/models/8_96/model_320000_02894.ckpt")
+  # saver.restore(sess2, "data/models/8_96/model_320000_02894.ckpt")
+  saver.restore(sess2, "data/models/12_96/model_10000000_03642.ckpt")
 
 def predict_move(board, legal_moves, second_model):
   global min_prob
 
   if second_model:
-    predictions = sess1.run(model.next_moves, feed_dict={model.x_image: [board], model.legal: [legal_moves]})
-  else:
     predictions = sess2.run(model.next_moves, feed_dict={model.x_image: [board], model.legal: [legal_moves]})
+  else:
+    predictions = sess1.run(model.next_moves, feed_dict={model.x_image: [board], model.legal: [legal_moves]})
 
   # print predictions
 
